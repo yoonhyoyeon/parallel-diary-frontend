@@ -45,42 +45,42 @@ export const authRoute = createRoute({
   component: AuthPage,
 });
 
-// 홈 페이지 (네비게이션, 로그인 필요)
+// 홈 페이지
 export const indexRoute = createRoute({
   getParentRoute: () => protectedRoute,
   path: '/',
   component: HomePage,
 });
 
-// 일기 생성 페이지 (로그인 필요)
+// 일기 생성 페이지
 export const createPageRoute = createRoute({
   getParentRoute: () => protectedRoute,
   path: '/create',
   component: CreatePage,
 });
 
-// 일기 목록 페이지 (로그인 필요)
+// 일기 목록 페이지
 export const diariesRoute = createRoute({
   getParentRoute: () => protectedRoute,
   path: '/diaries',
   component: DiaryListPage,
 });
 
-// 원본 일기 상세 페이지 (로그인 필요)
+// 원본 일기 상세 페이지
 export const diaryDetailRoute = createRoute({
   getParentRoute: () => protectedRoute,
   path: '/diaries/$id',
   component: DiaryDetailPage,
 });
 
-// 평행 일기 상세 페이지 (로그인 필요)
+// 평행 일기 상세 페이지
 export const parallelDetailRoute = createRoute({
   getParentRoute: () => protectedRoute,
   path: '/diaries/$id/parallel',
   component: ParallelDetailPage,
 });
 
-// 일상 분석 페이지 (로그인 필요)
+// 일상 분석 페이지
 export const analysisRoute = createRoute({
   getParentRoute: () => protectedRoute,
   path: '/analysis',

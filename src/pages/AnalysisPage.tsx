@@ -3,5 +3,5 @@ export default function AnalysisPage() {
     <div>
       <h1>AnalysisPage</h1>
     </div>
-  )
+  );
 }

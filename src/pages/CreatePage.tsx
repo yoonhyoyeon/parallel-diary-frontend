@@ -3,5 +3,5 @@ export default function CreatePage() {
     <div>
       <h1>CreatePage</h1>
     </div>
-  )
+  );
 }

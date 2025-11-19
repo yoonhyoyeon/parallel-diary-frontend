@@ -5,42 +5,14 @@ import HomeButton from '@/components/HomeButton';
 import PlusIcon from '@/assets/icons/plus.svg?react';
 import BookIcon from '@/assets/icons/book.svg?react';
 import ChartIcon from '@/assets/icons/chart.svg?react';
-import AnimationBackground from '@/components/AnimationBackground';
+import ParticleBackground from '@/components/ParticleBackground';
+import GradientBackground from '@/components/GradientBackground';
 
 export default function HomePage() {
   return (
     <main className="min-h-screen flex items-center justify-center px-5 bg-white relative overflow-hidden">
-      <AnimationBackground />
-      {/* 떠다니는 원형 그라데이션 배경 요소들 */}
-      <div 
-        className="absolute top-[5%] left-[10%] w-[700px] h-[700px] rounded-full opacity-[0.45] blur-[100px] pointer-events-none"
-        style={{ 
-          background: 'radial-gradient(circle, #9E89FF 0%, transparent 70%)',
-          animation: 'float1 20s ease-in-out infinite'
-        }}
-      />
-      <div 
-        className="absolute top-[50%] right-[5%] w-[800px] h-[800px] rounded-full opacity-[0.45] blur-[100px] pointer-events-none"
-        style={{ 
-          background: 'radial-gradient(circle, #68A1F2 0%, transparent 70%)',
-          animation: 'float2 25s ease-in-out infinite'
-        }}
-      />
-      <div 
-        className="absolute bottom-[10%] left-[15%] w-[650px] h-[650px] rounded-full opacity-[0.45] blur-[100px] pointer-events-none"
-        style={{ 
-          background: 'radial-gradient(circle, #9E89FF 0%, transparent 70%)',
-          animation: 'float3 22s ease-in-out infinite'
-        }}
-      />
-      <div 
-        className="absolute top-[25%] right-[20%] w-[750px] h-[750px] rounded-full opacity-[0.45] blur-[100px] pointer-events-none"
-        style={{ 
-          background: 'radial-gradient(circle, #68A1F2 0%, transparent 70%)',
-          animation: 'float4 28s ease-in-out infinite'
-        }}
-      />
-      
+      <ParticleBackground />
+      <GradientBackground />
       <div className="w-[700px] text-center max-w-7xl flex flex-col items-center relative z-10">
         <motion.img 
           className="w-[600px]" 

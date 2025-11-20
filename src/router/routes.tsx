@@ -1,7 +1,9 @@
 import { createRoute, redirect } from '@tanstack/react-router';
 import { rootRoute } from './rootRoute';
 import HomePage from '../pages/HomePage';
-import AuthPage from '../pages/AuthPage';
+import AuthLayout from '../pages/auth/AuthLayout';
+import LoginPage from '../pages/auth/LoginPage';
+import SignupPage from '../pages/auth/SignupPage';
 import CreatePage from '../pages/CreatePage';
 import DiaryListPage from '../pages/DiaryListPage';
 import DiaryDetailPage from '../pages/DiaryDetailPage';
@@ -21,7 +23,7 @@ export const protectedRoute = createRoute({
     const isAuthenticated = checkAuth();
     if (!isAuthenticated) {
       throw redirect({
-        to: '/auth',
+        to: '/auth/login',
         search: {
           redirect: location.href,
         },
@@ -30,7 +32,7 @@ export const protectedRoute = createRoute({
   },
 });
 
-// 인증 페이지 (로그인하면 접근 불가)
+// Auth 레이아웃 라우트 (공통 배경)
 export const authRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/auth',
@@ -42,7 +44,21 @@ export const authRoute = createRoute({
       });
     }
   },
-  component: AuthPage,
+  component: AuthLayout,
+});
+
+// 로그인 페이지
+export const loginRoute = createRoute({
+  getParentRoute: () => authRoute,
+  path: '/login',
+  component: LoginPage,
+});
+
+// 회원가입 페이지
+export const signupRoute = createRoute({
+  getParentRoute: () => authRoute,
+  path: '/signup',
+  component: SignupPage,
 });
 
 // 홈 페이지
@@ -63,6 +79,12 @@ export const createPageRoute = createRoute({
 export const diariesRoute = createRoute({
   getParentRoute: () => protectedRoute,
   path: '/diaries',
+  validateSearch: (search: Record<string, unknown>) => {
+    return {
+      tab: (search.tab as 'all' | 'date') || 'date',
+      date: search.date ? Number(search.date) : undefined,
+    };
+  },
   component: DiaryListPage,
 });
 

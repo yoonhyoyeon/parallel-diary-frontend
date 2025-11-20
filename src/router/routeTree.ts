@@ -1,6 +1,8 @@
 import { rootRoute } from './rootRoute';
 import {
   authRoute,
+  loginRoute,
+  signupRoute,
   protectedRoute,
   indexRoute,
   createPageRoute,
@@ -11,7 +13,10 @@ import {
 } from './routes';
 
 export const routeTree = rootRoute.addChildren([
-  authRoute,
+  authRoute.addChildren([
+    loginRoute,
+    signupRoute,
+  ]),
   protectedRoute.addChildren([
     indexRoute,
     createPageRoute,

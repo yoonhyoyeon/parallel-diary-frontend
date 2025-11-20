@@ -52,7 +52,6 @@ export default function CreatePage() {
       
       {currentStep === 'review' && (
         <ReviewStep 
-          initialContent={diaryContent}
           onComplete={handleReviewComplete}
           onBack={handleBack}
         />

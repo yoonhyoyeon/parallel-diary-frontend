@@ -17,6 +17,7 @@ export default function VoiceInput({ onMessage, isAISpeaking, isResponseLoading 
   const accumulatedTranscriptRef = useRef(''); // 누적된 텍스트를 저장
   const isRecordingRef = useRef(false); // 녹음 상태를 ref로 추적
   const voiceDetectionTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const isMountedRef = useRef(true); // 컴포넌트 마운트 상태 추적
 
   useEffect(() => {
     // Web Speech API 초기화
@@ -79,9 +80,17 @@ export default function VoiceInput({ onMessage, isAISpeaking, isResponseLoading 
         };
 
         recognition.onend = () => {
-          if (isRecordingRef.current) {
-            // 자동 재시작
-            recognition.start();
+          // 컴포넌트가 마운트되어 있고, 녹음 중일 때만 재시작
+          // recognitionRef.current가 null이 아니고 현재 recognition과 같을 때만 재시작
+          if (isMountedRef.current && isRecordingRef.current && recognitionRef.current) {
+            try {
+              recognition.start();
+            } catch (e) {
+              // 재시작 실패 시 무시 (이미 중지되었을 수 있음)
+              console.warn('Speech recognition restart failed:', e);
+              isRecordingRef.current = false;
+              setIsRecording(false);
+            }
           }
         };
 
@@ -90,12 +99,44 @@ export default function VoiceInput({ onMessage, isAISpeaking, isResponseLoading 
     }
 
     return () => {
+      // 컴포넌트 언마운트 표시 (onend에서 재시작하지 않도록)
+      isMountedRef.current = false;
+      
+      // 녹음 상태를 먼저 false로 설정 (onend에서 재시작하지 않도록)
+      isRecordingRef.current = false;
+      
+      // SpeechRecognition 정리
       if (recognitionRef.current) {
-        recognitionRef.current.stop();
+        // 이벤트 핸들러 제거 (재시작 방지)
+        try {
+          recognitionRef.current.onend = null;
+          recognitionRef.current.onresult = null;
+          recognitionRef.current.onerror = null;
+        } catch (e) {
+          // 무시
+        }
+        
+        // 녹음 중지
+        try {
+          recognitionRef.current.stop();
+        } catch (e) {
+          // 이미 중지된 경우 무시
+        }
+        try {
+          recognitionRef.current.abort();
+        } catch (e) {
+          // 이미 중지된 경우 무시
+        }
       }
+      
+      // 타이머 정리
       if (voiceDetectionTimerRef.current) {
         clearTimeout(voiceDetectionTimerRef.current);
+        voiceDetectionTimerRef.current = null;
       }
+      
+      // ref 초기화
+      recognitionRef.current = null;
     };
   }, []);
 
@@ -137,9 +178,16 @@ export default function VoiceInput({ onMessage, isAISpeaking, isResponseLoading 
       setTranscript('');
       accumulatedTranscriptRef.current = ''; // 누적 초기화
       setVoiceDetected(false);
+      isMountedRef.current = true; // 마운트 상태 확인
       isRecordingRef.current = true; // ref를 true로 설정
-      recognitionRef.current.start();
-      setIsRecording(true);
+      try {
+        recognitionRef.current.start();
+        setIsRecording(true);
+      } catch (e) {
+        console.error('Failed to start recording:', e);
+        isRecordingRef.current = false;
+        alert('녹음을 시작할 수 없습니다. 다시 시도해주세요.');
+      }
     }
   };
 

@@ -56,7 +56,7 @@ export default function ParticleBackground({ white = false }: { white?: boolean 
   }, [white]);
 
   return (
-    <div className="absolute inset-0 overflow-hidden pointer-events-none">
+    <div className="fixed inset-0 overflow-hidden pointer-events-none z-0">
       {particles.map((particle) => (
         <Particle key={particle.id} data={particle} />
       ))}

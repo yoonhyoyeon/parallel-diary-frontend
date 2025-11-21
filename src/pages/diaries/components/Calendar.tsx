@@ -1,18 +1,22 @@
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { useState, useEffect } from 'react';
 
 interface CalendarProps {
-  selectedDate: number; // 선택된 날짜 (일)
-  onDateChange: (date: number) => void;
+  selectedDate: string | undefined; // 선택된 날짜 (YYYY-MM-DD 형식)
+  onDateChange: (date: string) => void; // YYYY-MM-DD 형식으로 전달
   diaryDates?: Set<string>; // 일기가 있는 날짜들 (YYYY-MM-DD 형식)
 }
 
 export default function Calendar({ selectedDate, onDateChange, diaryDates = new Set() }: CalendarProps) {
   const today = new Date();
 
-  // selectedDate를 Date 객체로 변환
+  // selectedDate를 Date 객체로 변환 (YYYY-MM-DD 형식)
   const selectedDateObj = selectedDate 
-    ? new Date(today.getFullYear(), today.getMonth(), selectedDate)
+    ? (() => {
+        const [year, month, day] = selectedDate.split('-').map(Number);
+        return new Date(year, month - 1, day);
+      })()
     : undefined;
 
   function getWeekStart(date: Date): Date {
@@ -22,9 +26,21 @@ export default function Calendar({ selectedDate, onDateChange, diaryDates = new 
     return new Date(d.setDate(diff));
   }
 
-  const currentWeekStart = selectedDateObj 
-    ? getWeekStart(selectedDateObj)
-    : getWeekStart(today);
+  // 현재 보이는 주의 시작 날짜를 내부 state로 관리
+  const [currentWeekStart, setCurrentWeekStart] = useState<Date>(() => {
+    return selectedDateObj 
+      ? getWeekStart(selectedDateObj)
+      : getWeekStart(today);
+  });
+
+  // selectedDate가 변경되면 (사용자가 날짜를 선택하면) 해당 주로 이동
+  useEffect(() => {
+    if (selectedDate) {
+      const [year, month, day] = selectedDate.split('-').map(Number);
+      const date = new Date(year, month - 1, day);
+      setCurrentWeekStart(getWeekStart(date));
+    }
+  }, [selectedDate]);
 
   function getWeekDays(startDate: Date): Date[] {
     const days: Date[] = [];
@@ -66,23 +82,33 @@ export default function Calendar({ selectedDate, onDateChange, diaryDates = new 
   const weekDays = getWeekDays(currentWeekStart);
   const dayNames = ['일', '월', '화', '수', '목', '금', '토'];
 
+  // Date를 YYYY-MM-DD 형식으로 변환하는 헬퍼 함수
+  const formatDateToString = (date: Date): string => {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  };
+
   const goToPreviousWeek = () => {
-    const newDate = new Date(currentWeekStart);
-    newDate.setDate(newDate.getDate() - 7);
-    onDateChange(newDate.getDate());
+    // 보이는 주만 변경하고 선택된 날짜는 유지
+    const newWeekStart = new Date(currentWeekStart);
+    newWeekStart.setDate(newWeekStart.getDate() - 7);
+    setCurrentWeekStart(newWeekStart);
   };
 
   const goToNextWeek = () => {
-    const newDate = new Date(currentWeekStart);
-    newDate.setDate(newDate.getDate() + 7);
-    onDateChange(newDate.getDate());
+    // 보이는 주만 변경하고 선택된 날짜는 유지
+    const newWeekStart = new Date(currentWeekStart);
+    newWeekStart.setDate(newWeekStart.getDate() + 7);
+    setCurrentWeekStart(newWeekStart);
   };
 
   const currentMonth = weekDays[3].getMonth() + 1; // 중간 날짜 기준
   const currentYear = weekDays[3].getFullYear();
 
   return (
-    <div className="bg-white rounded-3xl shadow-[7px_18px_40px_0px_rgba(0,0,0,0.08)] p-4">
+    <div className="bg-white rounded-3xl p-4">
       {/* Month/Year Header with Navigation */}
       <div className="flex items-center justify-between mb-4">
         <button
@@ -119,7 +145,7 @@ export default function Calendar({ selectedDate, onDateChange, diaryDates = new 
               initial={{ opacity: 0, scale: 0.8 }}
               animate={{ opacity: 1, scale: 1 }}
               transition={{ delay: index * 0.05 }}
-              onClick={() => onDateChange(date.getDate())}
+              onClick={() => onDateChange(formatDateToString(date))}
               className={`
                 relative flex flex-col items-center justify-center py-3 rounded-2xl transition-all
                 ${isSelected 

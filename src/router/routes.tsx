@@ -9,6 +9,7 @@ import DiaryListPage from '../pages/DiaryListPage';
 import DiaryDetailPage from '../pages/DiaryDetailPage';
 import ParallelDetailPage from '../pages/ParallelDetailPage';
 import AnalysisPage from '../pages/AnalysisPage';
+import DiaryDetailLayout from '../pages/diaries/DiaryDetailLayout';
 
 // 임시 인증 체크 함수 
 const checkAuth = () => {
@@ -82,23 +83,30 @@ export const diariesRoute = createRoute({
   validateSearch: (search: Record<string, unknown>) => {
     return {
       tab: (search.tab as 'all' | 'date') || 'date',
-      date: search.date ? Number(search.date) : undefined,
+      date: search.date ? (search.date as string) : undefined, // YYYY-MM-DD 형식
     };
   },
   component: DiaryListPage,
 });
 
-// 원본 일기 상세 페이지
-export const diaryDetailRoute = createRoute({
+// 일기 상세 레이아웃 (공통 배경)
+export const diaryDetailLayoutRoute = createRoute({
   getParentRoute: () => protectedRoute,
   path: '/diaries/$id',
+  component: DiaryDetailLayout,
+});
+
+// 원본 일기 상세 페이지 (인덱스 라우트)
+export const diaryDetailRoute = createRoute({
+  getParentRoute: () => diaryDetailLayoutRoute,
+  path: '/',
   component: DiaryDetailPage,
 });
 
 // 평행 일기 상세 페이지
 export const parallelDetailRoute = createRoute({
-  getParentRoute: () => protectedRoute,
-  path: '/diaries/$id/parallel',
+  getParentRoute: () => diaryDetailLayoutRoute,
+  path: '/parallel',
   component: ParallelDetailPage,
 });
 

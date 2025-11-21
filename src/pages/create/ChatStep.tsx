@@ -8,6 +8,7 @@ import TextInput from './components/TextInput';
 import GuidanceMessage from '@/components/GuidanceMessage';
 import Button from '@/components/Button';
 import { AnimatePresence, motion } from 'framer-motion';
+import RightArrowIcon from '@/assets/icons/arrow_right.svg?react';
 
 interface ChatStepProps {
   onComplete: (content: string) => void;
@@ -148,7 +149,7 @@ export default function ChatStep({ onComplete }: ChatStepProps) {
         <div className="absolute left-8">
           <BackButton />
         </div>
-        {/* 모드 선택 */}
+          {/* 모드 선택 */}
         <div className="flex gap-2 px-2 py-2 bg-[#EAE8FF] rounded-full relative">
           <div 
             className="flex items-center gap-2 cursor-pointer px-6 py-3 rounded-full relative z-10"
@@ -175,7 +176,7 @@ export default function ChatStep({ onComplete }: ChatStepProps) {
                 transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
               />
             )}
-          </div>
+            </div>
           <div 
             className="flex items-center gap-2 cursor-pointer px-6 py-3 rounded-full relative z-10"
             onClick={() => setMode('text')}
@@ -235,6 +236,7 @@ export default function ChatStep({ onComplete }: ChatStepProps) {
                 <Button
                   variant="primary"
                   onClick={() => onComplete(mode)}
+                  icon={{ component: <RightArrowIcon color='#ffffff' width={18} height={18} />, position: 'right' }}
                 >
                   일기 생성하기
                 </Button>

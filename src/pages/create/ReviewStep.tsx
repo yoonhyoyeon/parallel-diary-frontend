@@ -153,7 +153,7 @@ export default function ReviewStep({ onComplete, onBack }: ReviewStepProps) {
               variant="primary" 
             onClick={handleSubmit}
             disabled={!content.trim()}
-              icon={<CreateIcon width={18} height={18} />}
+              icon={{ component: <CreateIcon color='#ffffff' width={18} height={18} />, position: 'left' }}
           >
             평행일기 생성하기
             </Button>

@@ -126,13 +126,16 @@ export default function LoginPage() {
         <Button
           variant="google"
           onClick={handleGoogleLogin}
-          icon={
-            <img 
-              src="/figma-assets/2e0625474d8cf189ba7ae94e1817240f8f0e5c90.png" 
-              alt=""
-              className="w-6 h-6"
-            />
-          }
+          icon={{
+            component: (
+              <img 
+                src="/figma-assets/2e0625474d8cf189ba7ae94e1817240f8f0e5c90.png" 
+                alt=""
+                className="w-6 h-6"
+              />
+            ),
+            position: 'left'
+          }}
         >
           Google
         </Button>
@@ -140,13 +143,16 @@ export default function LoginPage() {
         <Button
           variant="kakao"
           onClick={handleKakaoLogin}
-          icon={
-            <img 
-              src="/figma-assets/409cfb033f6ddd1a1f86f3c1d440595a02a85954.png" 
-              alt=""
-              className="w-8 h-8"
-            />
-          }
+          icon={{
+            component: (
+              <img 
+                src="/figma-assets/409cfb033f6ddd1a1f86f3c1d440595a02a85954.png" 
+                alt=""
+                className="w-8 h-8"
+              />
+            ),
+            position: 'left'
+          }}
         >
           Kakao
         </Button>

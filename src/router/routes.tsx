@@ -94,6 +94,11 @@ export const diaryDetailLayoutRoute = createRoute({
   getParentRoute: () => protectedRoute,
   path: '/diaries/$id',
   component: DiaryDetailLayout,
+  validateSearch: (search: Record<string, unknown>) => {
+    return {
+      fromCreate: search.fromCreate === 1 ? 1 : undefined,
+    };
+  },
 });
 
 // 원본 일기 상세 페이지 (인덱스 라우트)

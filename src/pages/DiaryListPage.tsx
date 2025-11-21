@@ -259,7 +259,7 @@ export default function DiaryListPage() {
               <Link 
                 to="/diaries/$id" 
                 params={{ id: entry.id }} 
-                search={{ tab: undefined, date: undefined }}
+                search={{ fromCreate: undefined }}
                 key={entry.id} 
                 className="flex-1"
               >

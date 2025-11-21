@@ -1,5 +1,6 @@
 import { useEffect } from 'react';
 import { motion } from 'framer-motion';
+import { useNavigate } from '@tanstack/react-router';
 
 interface LoadingStepProps {
   diaryContent: string;
@@ -7,14 +8,25 @@ interface LoadingStepProps {
 }
 
 export default function LoadingStep({ diaryContent: _diaryContent, onComplete }: LoadingStepProps) {
+  const navigate = useNavigate();
+
   useEffect(() => {
     // 5초 후 완료
     const timer = setTimeout(() => {
-      onComplete('dummy-parallel-diary-id');
+      const parallelDiaryId = 'dummy-parallel-diary-id';
+      onComplete(parallelDiaryId);
+      
+      // 평행일기 보기 페이지로 리다이렉트 (fromCreate query string 포함)
+      navigate({
+        to: '/diaries/$id/parallel',
+        params: { id: parallelDiaryId },
+        search: { fromCreate: 1 },
+        replace: true,
+      });
     }, 5000);
 
     return () => clearTimeout(timer);
-  }, [onComplete]);
+  }, [onComplete, navigate]);
 
   return (
     <div className="relative z-10 min-h-screen flex items-center justify-center text-center p-5">

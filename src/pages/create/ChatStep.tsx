@@ -225,15 +225,16 @@ export default function ChatStep({ onComplete }: ChatStepProps) {
           {/* 6번 이상 대화 시 일기 생성하기 버튼 표시 */}
           {messages.length >= 10 && (
               <motion.div 
-                className="flex flex-col items-center justify-center z-99 pb-5"
+                className="flex flex-col items-center justify-center z-99 pb-5 mt-12"
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.5, ease: "easeOut" }}
               >
-                <GuidanceMessage className="mb-8 mt-12">
+                <GuidanceMessage>
                   충분한 대화가 이루어졌어요!<br/>이제 일기를 생성해드릴게요.
                 </GuidanceMessage>
                 <Button
+                  className="mt-8"
                   variant="primary"
                   onClick={() => onComplete(mode)}
                   icon={{ component: <RightArrowIcon color='#ffffff' width={18} height={18} />, position: 'right' }}

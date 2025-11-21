@@ -1,4 +1,4 @@
-import { useParams, useNavigate } from '@tanstack/react-router';
+import { useParams, useNavigate, useSearch } from '@tanstack/react-router';
 import { motion } from 'framer-motion';
 import Button from '@/components/Button';
 import ConversionIcon from '@/assets/icons/conversion.svg?react';
@@ -7,6 +7,8 @@ import ArrowLeftIcon from '@/assets/icons/arrow_left.svg?react';
 export default function DiaryDetailPage() {
   const { id } = useParams({ from: '/protected/diaries/$id/' });
   const navigate = useNavigate();
+  const search = useSearch({ strict: false });
+  const fromCreate = search.fromCreate === 1;
   
   // 샘플 데이터 (실제로는 API에서 가져올 데이터)
   const diaryData = {
@@ -32,23 +34,25 @@ export default function DiaryDetailPage() {
   });
 
   return (
-    <div className="relative z-10 h-full max-w-[1030px] mx-auto px-5 py-10 flex flex-col">
+    <div className="h-full max-w-[1030px] mx-auto px-5 py-10 flex flex-col">
         {/* 헤더 - 타이틀과 뒤로가기 버튼 */}
-        <motion.div
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: -20 }}
-          transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
-          className="flex items-center gap-4 mb-10 shrink-0"
-        >
-          <button 
-            onClick={() => window.history.back()}
-            className="flex items-center"
+        {!fromCreate && (
+          <motion.div
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
+            className="flex items-center gap-4 mb-10 shrink-0"
           >
-            <ArrowLeftIcon width={18} height={18} className="text-[#090615]" />
-          </button>
-          <h1 className="text-[30px] font-bold text-soft-black">원본 일기</h1>
-        </motion.div>
+            <button 
+              onClick={() => window.history.back()}
+              className="flex items-center"
+            >
+              <ArrowLeftIcon width={18} height={18} className="text-[#090615]" />
+            </button>
+            <h1 className="text-[30px] font-bold text-soft-black">원본 일기</h1>
+          </motion.div>
+        )}
 
         {/* 일기 콘텐츠 박스 */}
         <motion.div
@@ -90,30 +94,57 @@ export default function DiaryDetailPage() {
           </div>
         </motion.div>
 
-        {/* 평행일기 보기 버튼 */}
-        {diaryData.hasParallel && (
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: 20 }}
-            transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1], delay: 0.2 }}
-            className="flex justify-center shrink-0"
-          >
-            <Button 
-              variant="primary" 
-              onClick={() => {
-                navigate({
-                  to: '/diaries/$id/parallel',
-                  params: { id: diaryData.id },
-                  replace: true,
-                });
-              }} 
-              icon={{ component: <ConversionIcon width={18} height={18} />, position: 'right' }}
+        {/* 버튼 영역 */}
+        <div className="flex justify-center gap-3 shrink-0">
+          {/* Create에서 온 경우 목록으로 버튼 */}
+          {fromCreate && (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: 20 }}
+              transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1], delay: 0.2 }}
             >
-              평행일기 보기
-            </Button>
-          </motion.div>
-        )}
+              <Button 
+                variant="secondary" 
+                onClick={() => {
+                  navigate({
+                    to: '/diaries',
+                    search: { tab: 'all', date: undefined },
+                  });
+                }}
+              >
+                일기목록으로 이동
+              </Button>
+            </motion.div>
+          )}
+
+          {/* 평행일기 보기 버튼 */}
+          {diaryData.hasParallel && (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: 20 }}
+              transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1], delay: 0.2 }}
+            >
+              <Button 
+                variant="primary" 
+                onClick={() => {
+                  navigate({
+                    to: '/diaries/$id/parallel',
+                    params: { id: diaryData.id },
+                    search: { fromCreate: fromCreate ? 1 : undefined },
+                    replace: true,
+                  });
+                }} 
+                icon={{ component: <ConversionIcon width={18} height={18} />, position: 'right' }}
+              >
+                평행일기 보기
+              </Button>
+            </motion.div>
+          )}
+
+          
+        </div>
     </div>
   );
 }

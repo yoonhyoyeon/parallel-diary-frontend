@@ -1,6 +1,6 @@
 import SpeakerIcon from '@/assets/icons/speaker.svg?react';
 import TextIcon from '@/assets/icons/text.svg?react';
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import ChatMessage from './components/ChatMessage';
 import BackButton from '@/components/BackButton';
 import VoiceInput from './components/VoiceInput';
@@ -22,6 +22,17 @@ interface Message {
   content: string;
 }
 
+const VOICE_STORAGE_KEY = 'parallel-diary-voice';
+
+const getInitialVoiceURI = () => {
+  if (typeof window === 'undefined') return '';
+  try {
+    return window.localStorage.getItem(VOICE_STORAGE_KEY) || '';
+  } catch {
+    return '';
+  }
+};
+
 // 1. 마운트 직후 AI 음성 출력 전에 녹음 버튼 눌리는 버그 수정 필요
 
 export default function ChatStep({ onComplete }: ChatStepProps) {
@@ -35,37 +46,114 @@ export default function ChatStep({ onComplete }: ChatStepProps) {
   ]);
   const [isAISpeaking, setIsAISpeaking] = useState(false);
   const [isResponseLoading, setIsResponseLoading] = useState(false);
+  const [availableVoices, setAvailableVoices] = useState<SpeechSynthesisVoice[]>([]);
+  const [selectedVoiceURI, setSelectedVoiceURI] = useState<string>(() => getInitialVoiceURI());
   const synthRef = useRef<SpeechSynthesis | null>(null);
   const chatContainerRef = useRef<HTMLDivElement>(null);
   const hasPlayedInitialMessage = useRef(false);
   const initialMessageTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const previousVoiceURIRef = useRef<string | null>(null);
 
   useEffect(() => {
     // 브라우저의 음성 합성 API 초기화
     if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
       synthRef.current = window.speechSynthesis;
+
+      const syncVoices = () => {
+        if (!synthRef.current) return;
+        const voices = synthRef.current.getVoices();
+        const dedupedVoices = voices.reduce<SpeechSynthesisVoice[]>((acc, voice) => {
+          const alreadyExists = acc.some((existing) => existing.voiceURI === voice.voiceURI);
+          if (!alreadyExists) {
+            acc.push(voice);
+          }
+          return acc;
+        }, []);
+        const prioritized = dedupedVoices.filter((voice) => voice.lang?.startsWith('ko'));
+        const normalized = (prioritized.length > 0 ? prioritized : dedupedVoices).sort((a, b) => {
+          if (a.lang === b.lang) {
+            return a.name.localeCompare(b.name);
+          }
+          return a.lang.localeCompare(b.lang);
+        });
+
+        setAvailableVoices(normalized);
+        if (!normalized.length) {
+          return;
+        }
+
+        const storedVoiceURI = getInitialVoiceURI();
+        setSelectedVoiceURI((prev) => {
+          const desiredVoiceURI = prev || storedVoiceURI;
+          if (desiredVoiceURI && normalized.some((voice) => voice.voiceURI === desiredVoiceURI)) {
+            return desiredVoiceURI;
+          }
+          return normalized[0]?.voiceURI || '';
+        });
+      };
+
+      syncVoices();
+      synthRef.current.addEventListener?.('voiceschanged', syncVoices);
+
+      // 클린업: 컴포넌트 언마운트 시 모든 리소스 정리
+      return () => {
+        // SpeechSynthesis 정리
+        if (synthRef.current) {
+          synthRef.current.cancel();
+          synthRef.current.removeEventListener?.('voiceschanged', syncVoices);
+        }
+        // 타이머 정리
+        if (initialMessageTimerRef.current) {
+          clearTimeout(initialMessageTimerRef.current);
+        }
+      };
     }
 
-    // 초기 메시지 음성 출력
+    return undefined;
+  }, []);
+
+  useEffect(() => {
+    if (hasPlayedInitialMessage.current) return;
+    if (!availableVoices.length) return;
+    if (!selectedVoiceURI) return;
+
     hasPlayedInitialMessage.current = true;
-    // 약간의 지연 후 출력 (UX 개선)
     initialMessageTimerRef.current = setTimeout(() => {
-      console.log('speakMessage', messages[0].content);
       speakMessage(messages[0].content);
     }, 800);
 
-    // 클린업: 컴포넌트 언마운트 시 모든 리소스 정리
     return () => {
-      // SpeechSynthesis 정리
-      if (synthRef.current) {
-        synthRef.current.cancel();
-      }
-      // 타이머 정리
       if (initialMessageTimerRef.current) {
         clearTimeout(initialMessageTimerRef.current);
+        initialMessageTimerRef.current = null;
       }
     };
-  }, []);
+  }, [availableVoices, selectedVoiceURI, messages]);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      if (selectedVoiceURI) {
+        window.localStorage.setItem(VOICE_STORAGE_KEY, selectedVoiceURI);
+      } else {
+        window.localStorage.removeItem(VOICE_STORAGE_KEY);
+      }
+    }
+
+    if (!synthRef.current) return;
+    // 다른 음성 재생 중이면 즉시 중단하여 새로운 음성 설정 적용
+    if (synthRef.current.speaking) {
+      synthRef.current.cancel();
+    }
+  }, [selectedVoiceURI]);
+
+  const latestAIMessage = useMemo(() => {
+    for (let i = messages.length - 1; i >= 0; i -= 1) {
+      if (messages[i].author === 'ai') {
+        return messages[i].content;
+      }
+    }
+    return '';
+  }, [messages]);
 
   // 새 메시지가 추가되면 스크롤을 맨 아래로
   useEffect(() => {
@@ -85,6 +173,11 @@ export default function ChatStep({ onComplete }: ChatStepProps) {
     utterance.lang = 'ko-KR';
     utterance.rate = 1.0;
     utterance.pitch = 1.0;
+    const selectedVoice = availableVoices.find((voice) => voice.voiceURI === selectedVoiceURI) || availableVoices[0];
+    if (selectedVoice) {
+      utterance.voice = selectedVoice;
+      utterance.lang = selectedVoice.lang || utterance.lang;
+    }
     
     utterance.onstart = () => setIsAISpeaking(true);
     utterance.onend = () => setIsAISpeaking(false);
@@ -143,11 +236,51 @@ export default function ChatStep({ onComplete }: ChatStepProps) {
     }
   };
 
+  useEffect(() => {
+    if (!selectedVoiceURI) return;
+
+    if (previousVoiceURIRef.current === null) {
+      previousVoiceURIRef.current = selectedVoiceURI;
+      return;
+    }
+
+    if (previousVoiceURIRef.current === selectedVoiceURI) {
+      return;
+    }
+
+    previousVoiceURIRef.current = selectedVoiceURI;
+
+    if (mode !== 'voice') return;
+    if (!latestAIMessage) return;
+
+    speakMessage(latestAIMessage);
+  }, [selectedVoiceURI, mode, latestAIMessage]);
+
   return (
     <div className="flex flex-col h-screen px-5">
       <div className="fixed top-0 left-0 right-0 flex items-center justify-center z-100 py-5">
         <div className="absolute left-8">
           <BackButton />
+        </div>
+        <div className="absolute right-8 flex items-center">
+          <div className="flex items-center gap-2 bg-white/80 text-[#4A3E86] px-4 py-2 rounded-full shadow-sm border border-white/60 min-w-[180px]">
+            <SpeakerIcon width={16} height={16} color="#6F5DD4" />
+            {availableVoices.length > 0 ? (
+              <select
+                value={selectedVoiceURI}
+                onChange={(event) => setSelectedVoiceURI(event.target.value)}
+                className="bg-transparent text-sm font-semibold focus:outline-none cursor-pointer max-w-[200px]"
+              >
+                {availableVoices.map((voice) => (
+                  <option key={voice.voiceURI} value={voice.voiceURI} className="text-black">
+                    {voice.name} ({voice.lang})
+                  </option>
+                ))}
+              </select>
+            ) : (
+              <span className="text-sm text-gray-500">음성 준비중...</span>
+            )}
+          </div>
         </div>
           {/* 모드 선택 */}
         <div className="flex gap-2 px-2 py-2 bg-[#EAE8FF] rounded-full relative">

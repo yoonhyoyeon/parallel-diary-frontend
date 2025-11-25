@@ -50,3 +50,22 @@ export async function loginUser(payload: LoginRequest) {
     body: JSON.stringify(payload),
   });
 }
+
+export interface UserProfile {
+  id: string;
+  email: string;
+  name: string;
+  provider: string;
+  providerId?: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export async function getProfile(token: string) {
+  return apiClient<UserProfile>('/auth/profile', {
+    method: 'GET',
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+}

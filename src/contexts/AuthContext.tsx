@@ -1,5 +1,6 @@
 import { createContext, useContext, useEffect, useState } from 'react';
 import type { ReactNode } from 'react';
+import { getProfile } from '@/services/authService';
 
 interface User {
   id: string;
@@ -18,6 +19,7 @@ interface AuthContextType {
   isLoading: boolean;
   login: (token: string, userData: User) => void;
   logout: () => void;
+  refreshUser: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -31,24 +33,31 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const [accessToken, setAccessToken] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  // 초기 로드 시 localStorage에서 인증 정보 복원
+  // 초기 로드 시 토큰 검증 및 인증 정보 복원
   useEffect(() => {
-    try {
-      const storedToken = window.localStorage.getItem('accessToken');
-      const storedUser = window.localStorage.getItem('user');
+    const verifyAndRestoreAuth = async () => {
+      try {
+        const storedToken = window.localStorage.getItem('accessToken');
 
-      if (storedToken && storedUser) {
-        setAccessToken(storedToken);
-        setUser(JSON.parse(storedUser));
+        if (storedToken) {
+          // 토큰으로 프로필 조회하여 유효성 검증
+          const profile = await getProfile(storedToken);
+          setAccessToken(storedToken);
+          setUser(profile);
+          // localStorage의 user 정보도 최신화
+          window.localStorage.setItem('user', JSON.stringify(profile));
+        }
+      } catch (error) {
+        console.error('Token verification failed:', error);
+        // 토큰 만료 또는 무효 - 인증 정보 제거
+        window.localStorage.removeItem('accessToken');
+        window.localStorage.removeItem('user');
+      } finally {
+        setIsLoading(false);
       }
-    } catch (error) {
-      console.error('Failed to restore auth state:', error);
-      // 손상된 데이터 제거
-      window.localStorage.removeItem('accessToken');
-      window.localStorage.removeItem('user');
-    } finally {
-      setIsLoading(false);
-    }
+    };
+
+    verifyAndRestoreAuth();
   }, []);
 
   const login = (token: string, userData: User) => {
@@ -65,6 +74,20 @@ export function AuthProvider({ children }: AuthProviderProps) {
     window.localStorage.removeItem('user');
   };
 
+  const refreshUser = async () => {
+    if (!accessToken) return;
+
+    try {
+      const profile = await getProfile(accessToken);
+      setUser(profile);
+      window.localStorage.setItem('user', JSON.stringify(profile));
+    } catch (error) {
+      console.error('Failed to refresh user:', error);
+      // 토큰 만료 시 로그아웃
+      logout();
+    }
+  };
+
   const value: AuthContextType = {
     user,
     accessToken,
@@ -72,6 +95,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     isLoading,
     login,
     logout,
+    refreshUser,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

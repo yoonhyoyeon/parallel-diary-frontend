@@ -11,10 +11,13 @@ import ParallelDetailPage from '../pages/ParallelDetailPage';
 import AnalysisPage from '../pages/AnalysisPage';
 import DiaryDetailLayout from '../pages/diaries/DiaryDetailLayout';
 
-// 임시 인증 체크 함수 
+// 인증 체크 함수
 const checkAuth = () => {
-  return true;
-}
+  if (typeof window === 'undefined') return false;
+  const token = window.localStorage.getItem('accessToken');
+  const user = window.localStorage.getItem('user');
+  return !!(token && user);
+};
 
 // 보호된 라우트 그룹 (인증 필요)
 export const protectedRoute = createRoute({

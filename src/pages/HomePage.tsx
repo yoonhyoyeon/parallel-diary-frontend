@@ -1,4 +1,5 @@
 import { motion } from 'framer-motion';
+import { useNavigate } from '@tanstack/react-router';
 import logo from '@/assets/images/home_logo_desktop.png';
 import cristal_ball from '@/assets/icons/crystal_ball.png';
 import HomeButton from '@/components/HomeButton';
@@ -7,12 +8,37 @@ import BookIcon from '@/assets/icons/book.svg?react';
 import ChartIcon from '@/assets/icons/chart.svg?react';
 import ParticleBackground from '@/components/ParticleBackground';
 import GradientBackground from '@/components/GradientBackground';
+import { useAuth } from '@/contexts/AuthContext';
 
 export default function HomePage() {
+  const { logout, user } = useAuth();
+  const navigate = useNavigate();
+
+  const handleLogout = () => {
+    logout();
+    navigate({ to: '/auth/login' });
+  };
+
   return (
     <main className="min-h-screen flex items-center justify-center px-5 bg-white relative overflow-hidden">
       <ParticleBackground />
       <GradientBackground />
+
+      {/* 로그아웃 링크 */}
+      <div className="absolute top-8 right-8 z-20 flex items-center gap-4">
+        {user && (
+          <span className="text-sm text-gray-600">
+            {user.name}님 환영합니다
+          </span>
+        )}
+        <a
+          onClick={handleLogout}
+          className="text-sm text-gray-400 hover:text-gray-600 underline cursor-pointer transition-colors"
+        >
+          로그아웃
+        </a>
+      </div>
+
       <div className="w-[700px] text-center max-w-7xl flex flex-col items-center relative z-10">
         <motion.img 
           className="w-[600px]" 

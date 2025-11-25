@@ -1,16 +1,53 @@
 import { useState } from 'react';
-import { Link } from '@tanstack/react-router';
+import { Link, useNavigate } from '@tanstack/react-router';
 import { motion } from 'framer-motion';
+import type { FormEvent } from 'react';
 import Input from '@/components/Input';
 import Button from '@/components/Button';
 import authLogoDesktop from '@/assets/images/auth_logo_desktop.png';
+import { loginUser } from '@/services/authService';
+import { ApiError } from '@/services/apiClient';
+import { useAuth } from '@/contexts/AuthContext';
 
 export default function LoginPage() {
+  const navigate = useNavigate();
+  const { login } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleLogin = () => {
-    console.log('로그인:', { email, password });
+  const handleLogin = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    if (isSubmitting) return;
+
+    setErrorMessage(null);
+
+    const trimmedEmail = email.trim();
+
+    if (!trimmedEmail || !password) {
+      setErrorMessage('이메일과 비밀번호를 입력해주세요.');
+      return;
+    }
+
+    try {
+      setIsSubmitting(true);
+      const response = await loginUser({ email: trimmedEmail, password });
+      
+      // AuthContext를 통해 로그인 상태 저장
+      login(response.accessToken, response.user);
+
+      // 홈으로 이동
+      navigate({ to: '/' });
+    } catch (error) {
+      if (error instanceof ApiError) {
+        setErrorMessage(error.message);
+      } else {
+        setErrorMessage('로그인 처리 중 문제가 발생했습니다. 잠시 후 다시 시도해주세요.');
+      }
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const handleGoogleLogin = () => {
@@ -73,7 +110,7 @@ export default function LoginPage() {
       </motion.div>
 
       {/* 로그인 폼 */}
-      <div className="flex flex-col gap-5 w-full mb-8">
+      <form className="flex flex-col gap-5 w-full mb-8" onSubmit={handleLogin}>
         {/* 이메일 입력 */}
         <Input
           variant="auth"
@@ -81,6 +118,7 @@ export default function LoginPage() {
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           placeholder="이메일"
+          autoComplete="email"
           className="border-transparent"
         />
 
@@ -91,17 +129,26 @@ export default function LoginPage() {
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           placeholder="비밀번호"
+          autoComplete="current-password"
           className="border-transparent"
         />
+
+        {errorMessage && (
+          <div className="-mt-2" aria-live="polite">
+            <p className="text-sm text-[#ff8f8f]">{errorMessage}</p>
+          </div>
+        )}
 
         {/* 로그인 버튼 */}
         <Button
           variant="auth"
-          onClick={handleLogin}
+          type="submit"
+          disabled={!email.trim() || !password || isSubmitting}
+          loading={isSubmitting}
         >
           로그인
         </Button>
-      </div>
+      </form>
 
       {/* 회원가입 링크 */}
       <div className="text-center mb-10">

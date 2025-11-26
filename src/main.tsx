@@ -14,7 +14,7 @@ if (rootElement && !rootElement.innerHTML) {
   root.render(
     <StrictMode>
       <AuthProvider>
-        <RouterProvider router={router} />
+      <RouterProvider router={router} />
       </AuthProvider>
     </StrictMode>,
   );

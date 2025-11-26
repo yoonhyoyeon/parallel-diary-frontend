@@ -4,6 +4,7 @@ import { useSearch, useNavigate, useRouterState, Link } from '@tanstack/react-ro
 import Calendar from './diaries/components/Calendar';
 import ArrowLeftIcon from '@/assets/icons/arrow_left.svg?react';
 import { motion, AnimatePresence } from 'framer-motion';
+import Tag from '@/components/Tag';
 
 type TabType = 'all' | 'date';
 
@@ -165,12 +166,17 @@ export default function DiaryListPage() {
       </div>
       <div className="relative z-10">
         {/* 헤더와 뒤로가기 버튼 */}
-        <div className="flex items-center gap-4 mb-[27px]">
-          <Link to="/" className="flex items-center">
-            <ArrowLeftIcon width={18} height={18} className="text-[#090615]" />
+        <motion.div 
+          className="flex items-center gap-4 mb-[27px]"
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
+        >
+          <Link to="/" className="flex items-center justify-center hover:opacity-70 transition-opacity">
+            <ArrowLeftIcon width={24} height={24} className="text-soft-black" />
           </Link>
-          <h1 className="text-[30px] font-bold text-soft-black">내 일기</h1>
-        </div>
+          <h1 className="text-2xl lg:text-[36px] font-bold text-black">내 일기</h1>
+        </motion.div>
 
       {/* 탭 */}
       <div className="mb-[40px]">
@@ -287,12 +293,7 @@ function DiaryCard({ entry }: { entry: DiaryEntry }) {
         {/* 태그들 */}
         <div className="flex gap-[8px] flex-wrap">
           {entry.tags.map((tag, index) => (
-            <span
-              key={index}
-              className='px-4 py-[5px] rounded-[8px] text-[14px] font-semibold bg-[#eae8ff] text-[#745ede]'
-            >
-              {tag}
-            </span>
+            <Tag key={index} text={tag} />
           ))}
         </div>
 

@@ -1,0 +1,15 @@
+<svg preserveAspectRatio="none" width="100%" height="100%" overflow="visible" style="display: block;" viewBox="0 0 499 339" fill="none" xmlns="http://www.w3.org/2000/svg">
+<g id="Background">
+<rect id="Rectangle 80" y="76" width="400" height="181" rx="24" fill="var(--fill-0, black)"/>
+<g id="Ellipse 5" filter="url(#filter0_f_149_610)">
+<path d="M305.819 165.003C305.819 184 475.776 228.481 258.19 199.399C231.885 199.399 195.52 186.003 210.561 165.003C210.561 146.007 138.366 126.263 258.19 130.607C284.495 130.607 231.117 165.003 305.819 165.003Z" fill="var(--fill-0, #6445EF)"/>
+</g>
+</g>
+<defs>
+<filter id="filter0_f_149_610" x="59" y="0" width="440" height="339" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+<feFlood flood-opacity="0" result="BackgroundImageFix"/>
+<feBlend mode="normal" in="SourceGraphic" in2="BackgroundImageFix" result="shape"/>
+<feGaussianBlur stdDeviation="65" result="effect1_foregroundBlur_149_610"/>
+</filter>
+</defs>
+</svg>

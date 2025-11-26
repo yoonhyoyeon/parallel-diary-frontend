@@ -80,7 +80,7 @@ export default function LoginPage() {
         transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
       >
         <motion.h1 
-          className="text-[44px] font-extrabold mb-2 bg-clip-text text-transparent"
+          className="text-[44px] font-extrabold mb-4 bg-clip-text text-transparent leading-[100%]"
           style={{ 
             letterSpacing: '-0.8px',
             background: 'linear-gradient(90deg, #F2F3FF 0%, #C7C8FF 16.83%, #656FC9 100%)',
@@ -94,7 +94,7 @@ export default function LoginPage() {
           평행일기
         </motion.h1>
         <motion.h2 
-          className="text-[44px] font-bold bg-clip-text text-transparent"
+          className="text-[44px] font-bold bg-clip-text text-transparent leading-[100%]"
           style={{ 
             letterSpacing: '-2px',
             background: 'linear-gradient(90deg, #F2F3FF 0%, #C7C8FF 16.83%, #656FC9 100%)',

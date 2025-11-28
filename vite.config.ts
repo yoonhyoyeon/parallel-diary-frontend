@@ -16,6 +16,11 @@ export default defineConfig({
   },
   server: {
     proxy: {
+      '/api/ai': {
+        target: 'http://43.202.81.16:3000',
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/api\/ai/, ''),
+      },
       '/api': {
         target: 'http://3.105.9.139:3000',
         changeOrigin: true,

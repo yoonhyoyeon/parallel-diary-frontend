@@ -7,9 +7,11 @@ interface VoiceInputProps {
   onMessage: (message: string) => void;
   isAISpeaking: boolean;
   isResponseLoading: boolean;
+  disabled?: boolean;
+  onInterruptAI?: () => void;
 }
 
-export default function VoiceInput({ onMessage, isAISpeaking, isResponseLoading }: VoiceInputProps) {
+export default function VoiceInput({ onMessage, isAISpeaking, isResponseLoading, disabled = false, onInterruptAI }: VoiceInputProps) {
   const [isRecording, setIsRecording] = useState(false);
   const [transcript, setTranscript] = useState('');
   const [voiceDetected, setVoiceDetected] = useState(false);
@@ -146,9 +148,13 @@ export default function VoiceInput({ onMessage, isAISpeaking, isResponseLoading 
       return;
     }
 
-    if (isAISpeaking || isResponseLoading) {
-      alert('AI가 말하는 중입니다. 잠시만 기다려주세요.');
+    if (disabled) {
       return;
+    }
+
+    // AI가 말하는 중이면 중단
+    if (isAISpeaking && onInterruptAI) {
+      onInterruptAI();
     }
 
     if (isRecording) {
@@ -208,8 +214,8 @@ export default function VoiceInput({ onMessage, isAISpeaking, isResponseLoading 
       {/* 녹음 버튼 */}
       <button
         onClick={handleToggleRecording}
-        disabled={isAISpeaking || isResponseLoading}
-        className={`relative w-[120px] h-[120px] rounded-full flex items-center justify-center cursor-pointer transition-transform hover:scale-105 ${(isAISpeaking || isResponseLoading) ? 'opacity-50 cursor-not-allowed' : ''}`}
+        disabled={disabled}
+        className={`relative w-[120px] h-[120px] rounded-full flex items-center justify-center cursor-pointer transition-transform hover:scale-105 ${disabled ? 'opacity-50 cursor-not-allowed' : ''}`}
       >
         {/* 외부 원 */}
         <motion.div 
@@ -249,8 +255,14 @@ export default function VoiceInput({ onMessage, isAISpeaking, isResponseLoading 
       </button>
 
       {/* 하단 텍스트 */}
-      <p className="text-[#745DDE] text-base">
-        {isAISpeaking ? 'AI가 말하는 중...' : isResponseLoading ? 'AI 응답 대기 중...' : isRecording ? '듣는 중...' : '터치하여 녹음 시작'}
+      <p className={`text-base ${disabled ? 'text-[#9f9f9f]' : 'text-[#745DDE]'}`}>
+        {disabled 
+          ? '최대 대화 횟수에 도달했습니다.' 
+          : isResponseLoading 
+            ? 'AI 응답 대기 중...' 
+            : isRecording 
+              ? '듣는 중...' 
+              : '터치하여 녹음 시작'}
       </p>
     </div>
   );

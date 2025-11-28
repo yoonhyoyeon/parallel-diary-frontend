@@ -4,15 +4,22 @@ import ReviewStep from './create/ReviewStep';
 import LoadingStep from './create/LoadingStep';
 import GradientBackground from '@/components/GradientBackground';
 import ParticleBackground from '@/components/ParticleBackground';
+
 type Step = 'chat' | 'review' | 'loading';
+
+interface ChatMessage {
+  role: 'user' | 'assistant';
+  content: string;
+}
 
 export default function CreatePage() {
   const [currentStep, setCurrentStep] = useState<Step>('chat');
   const [diaryContent, setDiaryContent] = useState<string>('');
+  const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
 
   // ChatStep에서 ReviewStep으로 이동
-  const handleChatComplete = (content: string) => {
-    setDiaryContent(content);
+  const handleChatComplete = (messages: ChatMessage[]) => {
+    setChatMessages(messages);
     setCurrentStep('review');
   };
 
@@ -52,6 +59,7 @@ export default function CreatePage() {
       
       {currentStep === 'review' && (
         <ReviewStep 
+          chatMessages={chatMessages}
           onComplete={handleReviewComplete}
           onBack={handleBack}
         />

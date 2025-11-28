@@ -3,15 +3,18 @@ import { motion, AnimatePresence } from 'framer-motion';
 import GuidanceMessage from '@/components/GuidanceMessage';
 import Button from '@/components/Button';
 import CreateIcon from '@/assets/icons/create.svg?react';
+import { generateDiary } from '@/services/diaryService';
 
 interface ReviewStepProps {
+  chatMessages: Array<{ role: 'user' | 'assistant'; content: string }>;
   onComplete: (editedContent: string) => void;
   onBack: () => void;
 }
 
-export default function ReviewStep({ onComplete, onBack }: ReviewStepProps) {
+export default function ReviewStep({ chatMessages, onComplete, onBack }: ReviewStepProps) {
   const [content, setContent] = useState('');
   const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   // 현재 날짜와 시간
@@ -29,14 +32,24 @@ export default function ReviewStep({ onComplete, onBack }: ReviewStepProps) {
   });
 
   useEffect(() => {
-    // 로딩 시뮬레이션 (실제로는 API 호출)
-    const timer = setTimeout(() => {
-      setIsLoading(false);
-      setContent('오늘은 아침에 일어나자마자 창문을 열었는데, 공기가 생각보다 차가워서 깜짝 놀랐다.커피를 내리면서 오늘은 꼭 해야 할 일들을 머릿속으로 정리했다.점심엔 오랜만에 밖에서 밥을 먹었는데, 혼자 먹는 밥이 이상하게 편안했다.카페에 들러 앉아있다가 우연히 들은 음악이 마음에 들어서 바로 플레이리스트에 추가했다.저녁쯤엔 갑자기 비가 내려서 버스를 타고 돌아왔는데, 창밖이 흐릿하게 번지는 게 예뻤다.집에 도착하니 생각보다 피곤해서 샤워 후 바로 누웠다.');
-    }, 2000);
+    // API 호출하여 일기 생성
+    const fetchDiary = async () => {
+      try {
+        setIsLoading(true);
+        setError(null);
+        
+        const response = await generateDiary(chatMessages);
+        setContent(response.content);
+      } catch (error) {
+        console.error('일기 생성 중 오류:', error);
+        setError('일기를 생성하는 중 오류가 발생했습니다. 다시 시도해주세요.');
+      } finally {
+        setIsLoading(false);
+      }
+    };
 
-    return () => clearTimeout(timer);
-  }, []);
+    fetchDiary();
+  }, [chatMessages]);
 
   // 로딩 완료 후 textarea 맨 뒤에 focus
   useEffect(() => {
@@ -75,6 +88,18 @@ export default function ReviewStep({ onComplete, onBack }: ReviewStepProps) {
               >
                 <GuidanceMessage className="mb-3">
                   대화를 기반으로 일기를 생성하고 있어요.<br/>잠시만 기다려주세요.
+                </GuidanceMessage>
+              </motion.div>
+            ) : error ? (
+              <motion.div
+                key="error"
+                initial={{ opacity: 0, y: -30 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -30 }}
+                transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
+              >
+                <GuidanceMessage className="mb-3 text-red-500">
+                  {error}
                 </GuidanceMessage>
               </motion.div>
             ) : (
@@ -125,8 +150,8 @@ export default function ReviewStep({ onComplete, onBack }: ReviewStepProps) {
               
           <textarea
                 ref={textareaRef}
-            value={content}
-            onChange={(e) => setContent(e.target.value)}
+                value={content}
+                onChange={(e) => setContent(e.target.value)}
                 className="w-full min-h-[420px] text-[18px] text-[#181818] leading-[1.6] resize-none outline-none bg-transparent"
             placeholder="일기 내용을 확인하고 수정하세요..."
           />
@@ -149,14 +174,42 @@ export default function ReviewStep({ onComplete, onBack }: ReviewStepProps) {
               다시 대화하기
             </Button>
 
-            <Button 
-              variant="primary" 
-            onClick={handleSubmit}
-            disabled={!content.trim()}
-              icon={{ component: <CreateIcon color='#ffffff' width={18} height={18} />, position: 'left' }}
-          >
-            평행일기 생성하기
-            </Button>
+            {error ? (
+              <Button 
+                variant="primary" 
+                onClick={() => {
+                  setError(null);
+                  setIsLoading(true);
+                  // useEffect가 다시 실행되도록 chatMessages를 재설정
+                  const fetchDiary = async () => {
+                    try {
+                      setIsLoading(true);
+                      setError(null);
+                      
+                      const response = await generateDiary(chatMessages);
+                      setContent(response.content);
+                    } catch (error) {
+                      console.error('일기 생성 중 오류:', error);
+                      setError('일기를 생성하는 중 오류가 발생했습니다. 다시 시도해주세요.');
+                    } finally {
+                      setIsLoading(false);
+                    }
+                  };
+                  fetchDiary();
+                }}
+              >
+                다시 시도
+              </Button>
+            ) : (
+              <Button 
+                variant="primary" 
+                onClick={handleSubmit}
+                disabled={!content.trim()}
+                icon={{ component: <CreateIcon color='#ffffff' width={18} height={18} />, position: 'left' }}
+              >
+                평행일기 생성하기
+              </Button>
+            )}
           </motion.div>
         )}
       </div>

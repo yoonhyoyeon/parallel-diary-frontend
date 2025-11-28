@@ -9,9 +9,10 @@ import GuidanceMessage from '@/components/GuidanceMessage';
 import Button from '@/components/Button';
 import { AnimatePresence, motion } from 'framer-motion';
 import RightArrowIcon from '@/assets/icons/arrow_right.svg?react';
+import { streamChat } from '@/services/apiClient';
 
 interface ChatStepProps {
-  onComplete: (content: string) => void;
+  onComplete: (messages: Array<{ role: 'user' | 'assistant'; content: string }>) => void;
 }
 
 type ModeType = 'voice' | 'text';
@@ -53,6 +54,19 @@ export default function ChatStep({ onComplete }: ChatStepProps) {
   const hasPlayedInitialMessage = useRef(false);
   const initialMessageTimerRef = useRef<NodeJS.Timeout | null>(null);
   const previousVoiceURIRef = useRef<string | null>(null);
+
+  // 대화 횟수 계산 (사용자 메시지 수)
+  const userMessageCount = messages.filter(msg => msg.author === 'user').length;
+  const canGenerateDiary = userMessageCount >= 4;
+  const isMaxReached = userMessageCount >= 10;
+
+  // AI 음성 중단 함수
+  const handleInterruptAI = () => {
+    if (synthRef.current) {
+      synthRef.current.cancel();
+      setIsAISpeaking(false);
+    }
+  };
 
   useEffect(() => {
     // 브라우저의 음성 합성 API 초기화
@@ -189,49 +203,87 @@ export default function ChatStep({ onComplete }: ChatStepProps) {
     return utterance;
   };
 
-  // AI 응답 시뮬레이션 (실제로는 API 호출)
-  const getAIResponse = async (): Promise<string> => {
-    // 여기서는 간단한 시뮬레이션
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    
-    const responses = [
-      '그렇군요! 더 자세히 말씀해주시겠어요?',
-      '흥미롭네요. 그때 기분이 어떠셨나요?',
-      '알겠습니다. 그 다음엔 어떤 일이 있었나요?',
-      '좋은 하루를 보내셨네요! 다른 특별한 일은 없었나요?',
-      '네, 잘 들었습니다. 오늘 하루 중 가장 기억에 남는 순간이 있다면요?'
-    ];
-    
-    return responses[Math.floor(Math.random() * responses.length)];
-  };
-
   // 사용자 메시지 처리
   const handleUserMessage = async (content: string) => {
     // 사용자 메시지 추가
     if(isResponseLoading) return;
-    setMessages(prev => [...prev, {
+
+    // 최대 대화 횟수 제한 (사용자 메시지 10개)
+    const userMessageCount = messages.filter(msg => msg.author === 'user').length;
+    if (userMessageCount >= 10) {
+      return;
+    }
+    
+    const userMessage: Message = {
       id: Date.now().toString(),
       author: 'user',
       content
-    }]);
+    };
+    
+    setMessages(prev => [...prev, userMessage]);
 
-    // AI 응답 생성
+    // AI 응답 생성 (SSE 스트리밍)
     try {
       setIsResponseLoading(true);
-      const aiResponse = await getAIResponse();
-      const aiMessage: Message = {
-        id: (Date.now() + 1).toString(),
+      
+      // AI 메시지 ID 미리 생성
+      const aiMessageId = (Date.now() + 1).toString();
+      let aiResponse = '';
+      
+      // 빈 AI 메시지 먼저 추가
+      setMessages(prev => [...prev, {
+        id: aiMessageId,
         author: 'ai',
-        content: aiResponse
-      };
-      setMessages(prev => [...prev, aiMessage]);
-      // AI 메시지를 음성으로 출력 (음성 모드일 때만)
-      if (mode === 'voice') {
-        speakMessage(aiResponse);
-      }
+        content: ''
+      }]);
+
+      // API 요청을 위한 메시지 형식 변환 (첫 메시지 포함)
+      const apiMessages = messages
+        .map(msg => ({
+          role: msg.author === 'user' ? 'user' as const : 'assistant' as const,
+          content: msg.content
+        }))
+        .concat([{ role: 'user' as const, content }]);
+
+      console.log('Sending messages:', apiMessages); // 디버깅용
+
+      // SSE 스트리밍으로 AI 응답 받기
+      await streamChat(
+        apiMessages,
+        (chunk) => {
+          // 청크를 받을 때마다 메시지 업데이트
+          aiResponse += chunk;
+          setMessages(prev => 
+            prev.map(msg => 
+              msg.id === aiMessageId 
+                ? { ...msg, content: aiResponse }
+                : msg
+            )
+          );
+        },
+        () => {
+          // 스트리밍 완료
+          setIsResponseLoading(false);
+          // AI 메시지를 음성으로 출력 (음성 모드일 때만)
+          if (mode === 'voice') {
+            speakMessage(aiResponse);
+          }
+        },
+        (error) => {
+          // 에러 처리
+          console.error('AI 응답 생성 중 오류 발생:', error);
+          setIsResponseLoading(false);
+          setMessages(prev => 
+            prev.map(msg => 
+              msg.id === aiMessageId 
+                ? { ...msg, content: '죄송합니다. 응답을 생성하는 중 오류가 발생했습니다.' }
+                : msg
+            )
+          );
+        }
+      );
     } catch (error) {
       console.error('AI 응답 생성 중 오류 발생:', error);
-    } finally {
       setIsResponseLoading(false);
     }
   };
@@ -355,21 +407,47 @@ export default function ChatStep({ onComplete }: ChatStepProps) {
             />
           ))}
            
-          {/* 6번 이상 대화 시 일기 생성하기 버튼 표시 */}
-          {messages.length >= 10 && (
+          {/* 4번 이상 대화 시 일기 생성하기 버튼 표시 */}
+          {canGenerateDiary && (
               <motion.div 
                 className="flex flex-col items-center justify-center z-99 pb-5 mt-12"
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.5, ease: "easeOut" }}
               >
-                <GuidanceMessage>
-                  충분한 대화가 이루어졌어요!<br/>이제 일기를 생성해드릴게요.
-                </GuidanceMessage>
+                {
+                  isMaxReached ? (
+                    <>
+                      <GuidanceMessage>
+                        최대 대화 횟수에 도달했어요!
+                      </GuidanceMessage>
+                      <GuidanceMessage>
+                        대화 내용을 기반으로 일기를 생성해드릴게요.
+                      </GuidanceMessage>
+                    </>
+                    
+                  ) : (
+                    <>
+                      <GuidanceMessage>
+                        충분한 대화가 이루어졌어요!
+                      </GuidanceMessage>
+                      <GuidanceMessage>
+                        대화 내용을 기반으로 일기를 생성할 수 있어요.
+                      </GuidanceMessage>
+                    </>
+                  )
+                }
                 <Button
                   className="mt-8"
                   variant="primary"
-                  onClick={() => onComplete(mode)}
+                  onClick={() => {
+                    // 메시지를 API 형식으로 변환하여 전달
+                    const apiMessages = messages.map(msg => ({
+                      role: msg.author === 'user' ? 'user' as const : 'assistant' as const,
+                      content: msg.content
+                    }));
+                    onComplete(apiMessages);
+                  }}
                   icon={{ component: <RightArrowIcon color='#ffffff' width={18} height={18} />, position: 'right' }}
                 >
                   일기 생성하기
@@ -389,7 +467,13 @@ export default function ChatStep({ onComplete }: ChatStepProps) {
                 exit={{ opacity: 0, y: -10 }}
                 transition={{ duration: 0.3, ease: "easeInOut" }}
               >
-                <VoiceInput onMessage={handleUserMessage} isAISpeaking={isAISpeaking} isResponseLoading={isResponseLoading} />
+                <VoiceInput 
+                  onMessage={handleUserMessage} 
+                  isAISpeaking={isAISpeaking} 
+                  isResponseLoading={isResponseLoading}
+                  disabled={isMaxReached}
+                  onInterruptAI={handleInterruptAI}
+                />
               </motion.div>
             )}
             {mode === 'text' && (
@@ -400,7 +484,10 @@ export default function ChatStep({ onComplete }: ChatStepProps) {
                 exit={{ opacity: 0, y: -10 }}
                 transition={{ duration: 0.3, ease: "easeInOut" }}
               >
-                <TextInput onMessage={handleUserMessage} />
+                <TextInput 
+                  onMessage={handleUserMessage}
+                  disabled={isMaxReached}
+                />
               </motion.div>
             )}
           </AnimatePresence>

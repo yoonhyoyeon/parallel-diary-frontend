@@ -53,7 +53,7 @@ export default function AnalysisPage() {
             <ScenarioRecommendCard />
           </div>
         </div>
-      </div>
+    </div>
     </main>
   );
 }

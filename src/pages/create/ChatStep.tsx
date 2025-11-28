@@ -37,7 +37,6 @@ const getInitialVoiceURI = () => {
 // 1. 마운트 직후 AI 음성 출력 전에 녹음 버튼 눌리는 버그 수정 필요
 
 export default function ChatStep({ onComplete }: ChatStepProps) {
-  const [isTTSSupported, setIsTTSSupported] = useState(true);
   const [mode, setMode] = useState<ModeType>('voice');
   const [messages, setMessages] = useState<Message[]>([
     {
@@ -73,7 +72,6 @@ export default function ChatStep({ onComplete }: ChatStepProps) {
     // 브라우저의 음성 합성 API 초기화
     if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
       synthRef.current = window.speechSynthesis;
-      setIsTTSSupported(true);
 
       const syncVoices = () => {
         if (!synthRef.current) return;
@@ -123,11 +121,6 @@ export default function ChatStep({ onComplete }: ChatStepProps) {
           clearTimeout(initialMessageTimerRef.current);
         }
       };
-    } else {
-      // speechSynthesis 미지원
-      setIsTTSSupported(false);
-      setMode('text'); // 자동으로 텍스트 모드로 전환
-      console.warn('이 브라우저는 음성 합성(TTS)을 지원하지 않습니다.');
     }
 
     return undefined;
@@ -325,9 +318,7 @@ export default function ChatStep({ onComplete }: ChatStepProps) {
         <div className="absolute right-8 flex items-center">
           <div className="flex items-center gap-2 bg-white/80 text-[#4A3E86] px-4 py-2 rounded-full shadow-sm border border-white/60 min-w-[180px]">
             <SpeakerIcon width={16} height={16} color="#6F5DD4" />
-            {!isTTSSupported ? (
-              <span className="text-sm text-red-500 font-medium">음성 기능 미지원</span>
-            ) : availableVoices.length > 0 ? (
+            {availableVoices.length > 0 ? (
               <select
                 value={selectedVoiceURI}
                 onChange={(event) => setSelectedVoiceURI(event.target.value)}
@@ -347,11 +338,8 @@ export default function ChatStep({ onComplete }: ChatStepProps) {
           {/* 모드 선택 */}
         <div className="flex gap-2 px-2 py-2 bg-[#EAE8FF] rounded-full relative">
           <div 
-            className={`flex items-center gap-2 px-6 py-3 rounded-full relative z-10 ${
-              isTTSSupported ? 'cursor-pointer' : 'cursor-not-allowed opacity-50'
-            }`}
-            onClick={() => isTTSSupported && setMode('voice')}
-            title={!isTTSSupported ? '이 브라우저는 음성 기능을 지원하지 않습니다' : ''}
+            className="flex items-center gap-2 cursor-pointer px-6 py-3 rounded-full relative z-10"
+            onClick={() => setMode('voice')}
           >
             <SpeakerIcon 
               className="transition-all duration-200" 
@@ -366,7 +354,7 @@ export default function ChatStep({ onComplete }: ChatStepProps) {
             }`}>
               음성
             </span>
-            {mode === 'voice' && isTTSSupported && (
+            {mode === 'voice' && (
               <motion.div
                 layoutId="activeTab"
                 className="absolute inset-0 bg-white rounded-full shadow-sm"

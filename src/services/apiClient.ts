@@ -54,7 +54,7 @@ export async function streamChat(
   const baseUrl = import.meta.env.VITE_AI_API_BASE_URL ?? '/api/ai';
 
   try {
-    const response = await fetch(`${baseUrl}/chat-history/stream-chat-with-history`, {
+    const response = await fetch(`${baseUrl}/chat/chat-sse`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

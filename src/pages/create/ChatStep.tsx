@@ -42,7 +42,7 @@ export default function ChatStep({ onComplete }: ChatStepProps) {
     {
       id: '1',
       author: 'ai',
-      content: '안녕하세요!☺️ 오늘 하루는 어땠나요? 편하게 이야기해주세요.'
+      content: '오늘 하루는 어땠나요?'
     }
   ]);
   const [isAISpeaking, setIsAISpeaking] = useState(false);

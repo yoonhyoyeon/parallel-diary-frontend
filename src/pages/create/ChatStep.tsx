@@ -373,19 +373,30 @@ export default function ChatStep({ onComplete }: ChatStepProps) {
                 variant="primary"
                 onClick={() => {
                   // TTS 잠금 해제
-                  if (synthRef.current) {
-                    const silent = new SpeechSynthesisUtterance('');
-                    silent.volume = 0;
-                    synthRef.current.speak(silent);
-                  }
-                  
                   setIsTTSUnlocked(true);
                   setShowVoiceStartPrompt(false);
                   
-                  // 초기 메시지 재생
-                  setTimeout(() => {
-                    speakMessage(messages[0].content);
-                  }, 100);
+                  // 최근 AI 메시지 재생 (사용자 인터랙션 컨텍스트 내에서 바로 실행)
+                  if (synthRef.current && latestAIMessage) {
+                    synthRef.current.cancel();
+                    
+                    const utterance = new SpeechSynthesisUtterance(latestAIMessage);
+                    utterance.lang = 'ko-KR';
+                    utterance.rate = 1.0;
+                    utterance.pitch = 1.0;
+                    
+                    const selectedVoice = availableVoices.find((voice) => voice.voiceURI === selectedVoiceURI) || availableVoices[0];
+                    if (selectedVoice) {
+                      utterance.voice = selectedVoice;
+                      utterance.lang = selectedVoice.lang || utterance.lang;
+                    }
+                    
+                    utterance.onstart = () => setIsAISpeaking(true);
+                    utterance.onend = () => setIsAISpeaking(false);
+                    utterance.onerror = () => setIsAISpeaking(false);
+                    
+                    synthRef.current.speak(utterance);
+                  }
                 }}
               >
                 음성 모드 시작하기

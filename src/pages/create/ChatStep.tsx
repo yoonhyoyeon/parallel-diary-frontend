@@ -10,6 +10,7 @@ import Button from '@/components/Button';
 import { AnimatePresence, motion } from 'framer-motion';
 import RightArrowIcon from '@/assets/icons/arrow_right.svg?react';
 import { streamChat } from '@/services/apiClient';
+import MicIcon from '@/assets/icons/microphone.svg?react';
 
 interface ChatStepProps {
   onComplete: (messages: Array<{ role: 'user' | 'assistant'; content: string }>) => void;
@@ -37,6 +38,9 @@ const getInitialVoiceURI = () => {
 // 1. 마운트 직후 AI 음성 출력 전에 녹음 버튼 눌리는 버그 수정 필요
 
 export default function ChatStep({ onComplete }: ChatStepProps) {
+  const [isIOSDevice, setIsIOSDevice] = useState(false);
+  const [isTTSUnlocked, setIsTTSUnlocked] = useState(false);
+  const [showVoiceStartPrompt, setShowVoiceStartPrompt] = useState(false);
   const [mode, setMode] = useState<ModeType>('voice');
   const [messages, setMessages] = useState<Message[]>([
     {
@@ -67,6 +71,26 @@ export default function ChatStep({ onComplete }: ChatStepProps) {
       setIsAISpeaking(false);
     }
   };
+
+  // iOS 감지
+  useEffect(() => {
+    const checkIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !(window as any).MSStream;
+    setIsIOSDevice(checkIOS);
+    
+    // iOS가 아니면 자동으로 TTS 잠금 해제
+    if (!checkIOS) {
+      setIsTTSUnlocked(true);
+    }
+  }, []);
+
+  // iOS에서만 음성 모드 시작 프롬프트 표시
+  useEffect(() => {
+    if (isIOSDevice && mode === 'voice' && !isTTSUnlocked) {
+      setShowVoiceStartPrompt(true);
+    } else {
+      setShowVoiceStartPrompt(false);
+    }
+  }, [isIOSDevice, mode, isTTSUnlocked]);
 
   useEffect(() => {
     // 브라우저의 음성 합성 API 초기화
@@ -179,6 +203,12 @@ export default function ChatStep({ onComplete }: ChatStepProps) {
   // AI 메시지를 음성으로 출력
   const speakMessage = (text: string) => {
     if (!synthRef.current) return;
+    
+    // iOS에서 TTS가 잠겨있으면 재생하지 않음
+    if (isIOSDevice && !isTTSUnlocked) {
+      console.log('iOS TTS 잠금 상태 - 사용자 인터랙션 필요');
+      return;
+    }
 
     // 이전 음성 중지
     synthRef.current.cancel();
@@ -311,6 +341,69 @@ export default function ChatStep({ onComplete }: ChatStepProps) {
 
   return (
     <div className="flex flex-col h-screen px-5">
+      {/* iOS 음성 모드 시작 프롬프트 */}
+      <AnimatePresence>
+        {showVoiceStartPrompt && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/50 flex items-center justify-center z-[200]"
+            onClick={(e) => {
+              if (e.target === e.currentTarget) {
+                setMode('text');
+                setShowVoiceStartPrompt(false);
+              }
+            }}
+          >
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              className="bg-white rounded-2xl p-8 max-w-md mx-4 text-center shadow-2xl"
+            >
+              <div className="flex justify-center items-center mb-8 mt-4"><MicIcon width={56} height={56} color="#9E89FF" /></div>
+              <h3 className="text-xl font-bold mb-2 text-gray-900">음성 모드 시작하기</h3>
+              <p className="text-gray-600 mb-6 leading-relaxed">
+                iOS에서 음성을 들으려면<br/>
+                아래 버튼을 눌러주세요
+              </p>
+              <Button
+                className="text-[16px]"
+                variant="primary"
+                onClick={() => {
+                  // TTS 잠금 해제
+                  if (synthRef.current) {
+                    const silent = new SpeechSynthesisUtterance('');
+                    silent.volume = 0;
+                    synthRef.current.speak(silent);
+                  }
+                  
+                  setIsTTSUnlocked(true);
+                  setShowVoiceStartPrompt(false);
+                  
+                  // 초기 메시지 재생
+                  setTimeout(() => {
+                    speakMessage(messages[0].content);
+                  }, 100);
+                }}
+              >
+                음성 모드 시작하기
+              </Button>
+              <button
+                onClick={() => {
+                  setMode('text');
+                  setShowVoiceStartPrompt(false);
+                }}
+                className="mt-4 text-sm text-gray-500 hover:text-gray-700 underline transition-colors"
+              >
+                텍스트 모드로 전환
+              </button>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       <div className="fixed top-0 left-0 right-0 flex items-center justify-center z-100 py-5">
         <div className="absolute left-8">
           <BackButton />

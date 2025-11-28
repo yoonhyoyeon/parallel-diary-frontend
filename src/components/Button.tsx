@@ -40,7 +40,7 @@ export default function Button({
       type={type}
       onClick={onClick}
       disabled={disabled || loading}
-      className={`${baseStyles} ${variantStyles[variant]} ${className}`}
+      className={`${className} ${baseStyles} ${variantStyles[variant]}`}
     >
       {icon && icon.position === 'left' && icon.component}
       <span>{loading ? '처리중...' : children}</span>

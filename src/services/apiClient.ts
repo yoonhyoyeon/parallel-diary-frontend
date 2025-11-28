@@ -74,20 +74,37 @@ export async function streamChat(
       throw new ApiError('응답 스트림을 읽을 수 없습니다.', 0);
     }
 
+    let buffer = '';
+
     while (true) {
       const { done, value } = await reader.read();
       if (done) break;
 
-      const chunk = decoder.decode(value, { stream: true });
-      const lines = chunk.split('\n');
+      buffer += decoder.decode(value, { stream: true });
+      console.log('buffer -> ', buffer);
 
-      for (const line of lines) {
-        if (line.startsWith('data: ')) {
-          const content = line.slice(6); // 'data: ' 제거
-          if (content.trim()) {
+      // "data: "를 구분자로 split
+      const chunks = buffer.split('data: ');
+      // 마지막 청크는 불완전할 수 있으므로 버퍼에 보관
+      buffer = 'data: ' + (chunks.pop() || '');
+
+      for (const chunk of chunks) {
+        if (chunk) { // 첫 번째 빈 문자열 제외
+          // 끝의 \n\n 제거 (SSE 이벤트 구분자)
+          const content = chunk.replace(/\n\n$/, '');
+          console.log('content -> ', content);
+          if (content) {
             onChunk(content);
           }
         }
+      }
+    }
+
+    // 남은 버퍼 처리
+    if (buffer && buffer.startsWith('data: ')) {
+      const content = buffer.slice(6).replace(/\n\n$/, '');
+      if (content) {
+        onChunk(content);
       }
     }
 

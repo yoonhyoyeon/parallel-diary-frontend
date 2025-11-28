@@ -252,6 +252,7 @@ export default function ChatStep({ onComplete }: ChatStepProps) {
         apiMessages,
         (chunk) => {
           // 청크를 받을 때마다 메시지 업데이트
+          console.log('chunk', chunk);
           aiResponse += chunk;
           setMessages(prev => 
             prev.map(msg => 

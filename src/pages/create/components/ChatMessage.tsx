@@ -22,7 +22,7 @@ export default function ChatMessage({ author, content }: ChatMessageProps) {
             : 'bg-[#090615] text-white shadow-[4px_0px_14px_0px_rgba(0,0,0,0.04)]'
         }`}
       >
-        <p className={`text-lg leading-relaxed whitespace-pre-wrap ${isAI ? 'font-medium' : 'font-normal'}`}>
+        <p className={`text-lg leading-relaxed ${isAI ? 'font-medium' : 'font-normal'}`}>
           {content}
         </p>
       </div>

@@ -348,7 +348,7 @@ export default function ChatStep({ onComplete }: ChatStepProps) {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black/50 flex items-center justify-center z-[200]"
+            className="fixed inset-0 bg-black/50 flex items-center justify-center z-200"
             onClick={(e) => {
               if (e.target === e.currentTarget) {
                 setMode('text');
@@ -360,7 +360,7 @@ export default function ChatStep({ onComplete }: ChatStepProps) {
               initial={{ scale: 0.9, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.9, opacity: 0 }}
-              className="bg-white rounded-2xl p-8 max-w-md mx-4 text-center shadow-2xl"
+              className="flex flex-col items-center bg-white rounded-2xl p-8 max-w-lg w-full mx-4 text-center shadow-2xl"
             >
               <div className="flex justify-center items-center mb-8 mt-4"><MicIcon width={56} height={56} color="#9E89FF" /></div>
               <h3 className="text-xl font-bold mb-2 text-gray-900">음성 모드 시작하기</h3>

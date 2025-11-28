@@ -1,12 +1,12 @@
 {
   "rewrites": [
     {
-      "source": "/api/:path*",
-      "destination": "http://3.105.9.139:3000/:path*"
-    },
-    {
       "source": "/api/ai/:path*",
       "destination": "http://43.202.81.16:3000/:path*"
+    },
+    {
+      "source": "/api/:path*",
+      "destination": "http://3.105.9.139:3000/:path*"
     },
     {
       "source": "/(.*)",

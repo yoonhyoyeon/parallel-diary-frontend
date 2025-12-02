@@ -340,7 +340,7 @@ export default function ChatStep({ onComplete }: ChatStepProps) {
   }, [selectedVoiceURI, mode, latestAIMessage]);
 
   return (
-    <div className="flex flex-col h-screen px-5">
+    <div className="flex flex-col h-screen px-4 md:px-6 lg:px-5">
       {/* iOS 음성 모드 시작 프롬프트 */}
       <AnimatePresence>
         {showVoiceStartPrompt && (
@@ -348,7 +348,7 @@ export default function ChatStep({ onComplete }: ChatStepProps) {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black/50 flex items-center justify-center z-200"
+            className="fixed inset-0 bg-black/50 flex items-center justify-center z-200 px-4"
             onClick={(e) => {
               if (e.target === e.currentTarget) {
                 setMode('text');
@@ -360,16 +360,18 @@ export default function ChatStep({ onComplete }: ChatStepProps) {
               initial={{ scale: 0.9, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.9, opacity: 0 }}
-              className="flex flex-col items-center bg-white rounded-2xl p-8 max-w-lg w-full mx-4 text-center shadow-2xl"
+              className="flex flex-col items-center bg-white rounded-2xl p-6 md:p-8 max-w-lg w-full text-center shadow-2xl"
             >
-              <div className="flex justify-center items-center mb-8 mt-4"><MicIcon width={56} height={56} color="#9E89FF" /></div>
-              <h3 className="text-xl font-bold mb-2 text-gray-900">음성 모드 시작하기</h3>
-              <p className="text-gray-600 mb-6 leading-relaxed">
+              <div className="flex justify-center items-center mb-6 md:mb-8 mt-2 md:mt-4">
+                <MicIcon width={48} height={48} color="#9E89FF" className="md:w-14 md:h-14" />
+              </div>
+              <h3 className="text-lg md:text-xl font-bold mb-2 text-gray-900">음성 모드 시작하기</h3>
+              <p className="text-sm md:text-base text-gray-600 mb-5 md:mb-6 leading-relaxed">
                 iOS에서 음성을 들으려면<br/>
                 아래 버튼을 눌러주세요
               </p>
               <Button
-                className="text-[16px]"
+                className="text-sm md:text-base w-full"
                 variant="primary"
                 onClick={() => {
                   // TTS 잠금 해제
@@ -406,7 +408,7 @@ export default function ChatStep({ onComplete }: ChatStepProps) {
                   setMode('text');
                   setShowVoiceStartPrompt(false);
                 }}
-                className="mt-4 text-sm text-gray-500 hover:text-gray-700 underline transition-colors"
+                className="mt-3 md:mt-4 text-xs md:text-sm text-gray-500 hover:text-gray-700 underline transition-colors"
               >
                 텍스트 모드로 전환
               </button>
@@ -415,12 +417,12 @@ export default function ChatStep({ onComplete }: ChatStepProps) {
         )}
       </AnimatePresence>
 
-      <div className="fixed top-0 left-0 right-0 flex items-center justify-center z-100 py-5">
-        <div className="absolute left-8">
+      <div className="fixed top-0 left-0 right-0 flex items-center justify-center z-100 py-4 md:py-5 px-4">
+        <div className="absolute left-4 md:left-8">
           <BackButton />
         </div>
-        <div className="absolute right-8 flex items-center">
-          <div className="flex items-center gap-2 bg-white/80 text-[#4A3E86] px-4 py-2 rounded-full shadow-sm border border-white/60 min-w-[180px]">
+        <div className="absolute right-4 md:right-8 flex items-center">
+          <div className="hidden md:flex items-center gap-2 bg-white/80 text-[#4A3E86] px-4 py-2 rounded-full shadow-sm border border-white/60 min-w-[180px]">
             <SpeakerIcon width={16} height={16} color="#6F5DD4" />
             {availableVoices.length > 0 ? (
               <select
@@ -440,18 +442,18 @@ export default function ChatStep({ onComplete }: ChatStepProps) {
           </div>
         </div>
           {/* 모드 선택 */}
-        <div className="flex gap-2 px-2 py-2 bg-[#EAE8FF] rounded-full relative">
+        <div className="flex gap-1.5 md:gap-2 px-1.5 md:px-2 py-1.5 md:py-2 bg-[#EAE8FF] rounded-full relative">
           <div 
-            className="flex items-center gap-2 cursor-pointer px-6 py-3 rounded-full relative z-10"
+            className="flex items-center gap-1.5 md:gap-2 cursor-pointer px-4 md:px-6 py-2 md:py-3 rounded-full relative z-10"
             onClick={() => setMode('voice')}
           >
             <SpeakerIcon 
               className="transition-all duration-200" 
               color={mode === 'voice' ? '#9E89FF' : '#7A7A7A'} 
-              width={18} 
-              height={18} 
+              width={16} 
+              height={16}
             />
-            <span className={`transition-all duration-200 text-sm ${
+            <span className={`transition-all duration-200 text-xs md:text-sm ${
               mode === 'voice' 
                 ? 'text-[#9E89FF] font-semibold' 
                 : 'text-[#7A7A7A] font-normal'
@@ -468,16 +470,16 @@ export default function ChatStep({ onComplete }: ChatStepProps) {
             )}
             </div>
           <div 
-            className="flex items-center gap-2 cursor-pointer px-6 py-3 rounded-full relative z-10"
+            className="flex items-center gap-1.5 md:gap-2 cursor-pointer px-4 md:px-6 py-2 md:py-3 rounded-full relative z-10"
             onClick={() => setMode('text')}
           >
             <TextIcon 
               className="transition-all duration-200" 
               color={mode === 'text' ? '#9E89FF' : '#7A7A7A'} 
-              width={18} 
-              height={18} 
+              width={16} 
+              height={16}
             />
-            <span className={`transition-all duration-200 text-sm ${
+            <span className={`transition-all duration-200 text-xs md:text-sm ${
               mode === 'text' 
                 ? 'text-[#9E89FF] font-semibold' 
                 : 'text-[#7A7A7A] font-normal'
@@ -500,8 +502,8 @@ export default function ChatStep({ onComplete }: ChatStepProps) {
         className="flex flex-col max-w-4xl w-full mx-auto h-full overflow-y-auto min-h-0 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]"
       >
         {/* 채팅 인터페이스 - 스크롤 가능한 영역 */}
-        <div className="flex-1 flex flex-col gap-6 pt-37 pb-55">
-          <GuidanceMessage className="mb-5">
+        <div className="flex-1 flex flex-col gap-4 md:gap-6 pt-28 md:pt-32 lg:pt-37 pb-48 md:pb-52 lg:pb-55">
+          <GuidanceMessage className="mb-3 md:mb-5">
             오늘 하루는 어땟나요? 편하게 이야기해주세요.
           </GuidanceMessage>
           {messages.map((message) => (
@@ -515,7 +517,7 @@ export default function ChatStep({ onComplete }: ChatStepProps) {
           {/* 4번 이상 대화 시 일기 생성하기 버튼 표시 */}
           {canGenerateDiary && (
               <motion.div 
-                className="flex flex-col items-center justify-center z-99 pb-5 mt-12"
+                className="flex flex-col items-center justify-center z-99 pb-4 md:pb-5 mt-8 md:mt-12"
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.5, ease: "easeOut" }}
@@ -543,7 +545,7 @@ export default function ChatStep({ onComplete }: ChatStepProps) {
                   )
                 }
                 <Button
-                  className="mt-8"
+                  className="mt-6 md:mt-8"
                   variant="primary"
                   onClick={() => {
                     // 메시지를 API 형식으로 변환하여 전달

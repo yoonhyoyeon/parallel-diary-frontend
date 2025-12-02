@@ -23,20 +23,18 @@ export default function DiaryDetailLayout() {
         <GradientBackground darkMode={isParallel} />
       </div>
       
-      {/* Create에서 온 경우 안내 메시지 - 고정 */}
-      {fromCreate && (
-        <div className="relative z-10 pt-10 flex justify-center shrink-0">
-          <GuidanceMessage className="text-[32px]">
-            평행일기가 생성되었어요!
-          </GuidanceMessage>
-        </div>
-      )}
-      
       {/* 자식 라우트 렌더링 with 애니메이션 */}
       <div className="relative z-10 flex-1 min-h-0 overflow-y-auto">
-        <AnimatePresence mode="wait">
-          <Outlet key={location.pathname} />
-        </AnimatePresence>
+        {fromCreate && (
+          <AnimatePresence mode="wait">
+            <div className="mt-20">
+              <GuidanceMessage key={location.pathname}>
+                평행일기가 생성되었어요!
+              </GuidanceMessage>
+            </div>
+          </AnimatePresence>
+        )}
+        <Outlet />
       </div>
     </motion.div>
   );

@@ -1,5 +1,5 @@
 import { motion, AnimatePresence } from 'framer-motion';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import ArrowLeftIcon from '@/assets/icons/arrow_left.svg?react';
 import ArrowRightIcon from '@/assets/icons/arrow_right.svg?react';
 
@@ -51,20 +51,33 @@ const scenarios = [
 export default function ScenarioRecommendCard() {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [direction, setDirection] = useState(0);
+  const [isMobile, setIsMobile] = useState(false);
+
+  // 모바일 감지
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
+
+  const itemsPerPage = isMobile ? 1 : 2;
 
   const handlePrev = () => {
     setDirection(-1);
-    setCurrentIndex((prev) => (prev > 0 ? prev - 2 : scenarios.length - 2));
+    setCurrentIndex((prev) => (prev > 0 ? prev - itemsPerPage : scenarios.length - itemsPerPage));
   };
 
   const handleNext = () => {
     setDirection(1);
-    setCurrentIndex((prev) => (prev + 2 < scenarios.length ? prev + 2 : 0));
+    setCurrentIndex((prev) => (prev + itemsPerPage < scenarios.length ? prev + itemsPerPage : 0));
   };
 
   const isFirstPage = currentIndex === 0;
-  const isLastPage = currentIndex + 2 >= scenarios.length;
-  const visibleScenarios = scenarios.slice(currentIndex, currentIndex + 2);
+  const isLastPage = currentIndex + itemsPerPage >= scenarios.length;
+  const visibleScenarios = scenarios.slice(currentIndex, currentIndex + itemsPerPage);
 
   return (
     <motion.div

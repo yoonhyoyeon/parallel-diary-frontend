@@ -14,7 +14,7 @@ export default function GuidanceMessage({ children, className = '' }: GuidanceMe
       transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
     >
       <motion.span 
-        className={`bg-clip-text text-transparent text-2xl font-bold leading-relaxed ${className}`}
+        className={`break-keep bg-clip-text text-transparent text-xl md:text-2xl font-bold leading-relaxed ${className}`}
         style={{
           background: 'linear-gradient(90deg, #938CC8 0%, #C3C0D7 50%, #938CC8 100%)',
           backgroundSize: '200% auto',

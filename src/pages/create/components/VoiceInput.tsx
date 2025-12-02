@@ -198,7 +198,9 @@ export default function VoiceInput({ onMessage, isAISpeaking, isResponseLoading,
   };
 
   return (
-    <div className="flex flex-col items-center gap-4 pb-10">
+    <div className="relative flex flex-col items-center gap-4 pb-10">
+      {/* 흰색 그라데이션 배경 */}
+      <div className="absolute inset-x-0 -bottom-10 h-[300px] bg-gradient-to-t from-white via-white/80 to-transparent pointer-events-none -z-10" />
       {/* 인식된 텍스트 표시 */}
       {transcript && (
         <motion.div 

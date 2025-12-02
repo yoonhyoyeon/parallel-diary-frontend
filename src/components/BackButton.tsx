@@ -15,7 +15,7 @@ export default function BackButton({
   return (
     <Link to={to} className={`flex items-center gap-2 ${className}`}>
       <ArrowLeftIcon width={18} height={18} />
-      <span className="font-semibold text-[#090615]">{label}</span>
+      <span className="font-semibold text-[#090615] hidden md:inline">{label}</span>
     </Link>
   );
 }

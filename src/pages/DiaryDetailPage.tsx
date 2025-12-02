@@ -60,9 +60,9 @@ export default function DiaryDetailPage() {
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: 20 }}
           transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
-          className="bg-white rounded-2xl md:rounded-3xl lg:rounded-[36px] shadow-[0px_0px_30px_0px_rgba(0,0,0,0.06)] flex-1 flex flex-col mb-[120px] min-h-[400px]"
+          className="bg-white rounded-2xl md:rounded-3xl lg:rounded-[36px] shadow-[0px_0px_30px_0px_rgba(0,0,0,0.06)] flex-1 flex flex-col mb-[120px]"
         >
-          <div className="p-6 md:p-10 lg:p-[60px] lg:pt-[50px] flex flex-col flex-1 min-h-0">
+          <div className="p-6 md:p-10 lg:p-[60px] lg:pt-[50px] flex flex-col flex-1">
             {/* 날짜와 시간 */}
             <div className="pb-3 md:pb-4 border-b border-gray-200 shrink-0">
               <p className="text-sm md:text-base text-gray-500">
@@ -70,8 +70,8 @@ export default function DiaryDetailPage() {
               </p>
             </div>
             
-            {/* 일기 내용 - 스크롤 가능 영역 */}
-            <div className="w-full flex-1 min-h-0 overflow-y-auto text-base md:text-[17px] lg:text-[18px] text-[#181818] leading-[160%] pr-2 py-4 md:py-5 lg:py-6">
+            {/* 일기 내용 */}
+            <div className="w-full flex-1 overflow-y-auto text-base md:text-[17px] lg:text-[18px] text-[#181818] leading-[160%] pr-2 py-4 md:py-5 lg:py-6">
               {diaryData.content}
             </div>
 

@@ -73,10 +73,10 @@ export default function ReviewStep({ chatMessages, onComplete, onBack }: ReviewS
   };
 
   return (
-      <div className="flex flex-col min-h-screen px-5 py-10 relative z-10 items-center justify-center">
+      <div className="flex flex-col min-h-screen px-4 md:px-6 lg:px-5 py-6 md:py-8 lg:py-10 relative z-10 items-center justify-center">
         <div className="max-w-[1030px] w-full mx-auto relative z-10">
         {/* 타이틀 & 서브 타이틀 */}
-        <div className="mb-10">
+        <div className="mb-6 md:mb-8 lg:mb-10">
           <AnimatePresence mode="wait">
             {isLoading ? (
               <motion.div
@@ -119,12 +119,12 @@ export default function ReviewStep({ chatMessages, onComplete, onBack }: ReviewS
         </div>
         
         {/* 콘텐츠 박스 */}
-        <div className="bg-white rounded-[36px] shadow-[0px_0px_30px_0px_rgba(0,0,0,0.06)] min-h-[610px] mb-10">
+        <div className="bg-white rounded-2xl md:rounded-3xl lg:rounded-[36px] shadow-[0px_0px_30px_0px_rgba(0,0,0,0.06)] min-h-[400px] md:min-h-[500px] lg:min-h-[610px] mb-6 md:mb-8 lg:mb-10">
           {isLoading ? (
             // 로딩 상태
-            <div className="p-16">
+            <div className="p-8 md:p-12 lg:p-16">
               <p 
-                className="text-xl font-semibold bg-linear-to-r from-[#7463ed] to-[#261e4c] bg-clip-text text-transparent"
+                className="text-lg md:text-xl font-semibold bg-linear-to-r from-[#7463ed] to-[#261e4c] bg-clip-text text-transparent"
                 style={{
                   backgroundSize: '200% auto',
                   animation: 'gradient-flow 3s ease infinite'
@@ -139,11 +139,11 @@ export default function ReviewStep({ chatMessages, onComplete, onBack }: ReviewS
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ duration: 0.5 }}
-              className="p-[60px] pt-[50px]"
+              className="p-8 md:p-12 lg:p-[60px] pt-7 md:pt-12 lg:pt-[50px]"
             >
               {/* 날짜와 시간 */}
-              <div className="mb-6 pb-4 border-b border-gray-200">
-                <p className="text-base text-gray-500">
+              <div className="mb-4 md:mb-5 lg:mb-6 pb-3 md:pb-4 border-b border-gray-200">
+                <p className="text-sm md:text-base text-gray-500">
                   {dateString} • {timeString}
                 </p>
               </div>
@@ -152,7 +152,7 @@ export default function ReviewStep({ chatMessages, onComplete, onBack }: ReviewS
                 ref={textareaRef}
                 value={content}
                 onChange={(e) => setContent(e.target.value)}
-                className="w-full min-h-[420px] text-[18px] text-[#181818] leading-[1.6] resize-none outline-none bg-transparent"
+                className="w-full min-h-[300px] md:min-h-[350px] lg:min-h-[420px] text-base md:text-[17px] lg:text-[18px] text-[#181818] leading-[1.6] resize-none outline-none bg-transparent"
             placeholder="일기 내용을 확인하고 수정하세요..."
           />
             </motion.div>
@@ -165,11 +165,12 @@ export default function ReviewStep({ chatMessages, onComplete, onBack }: ReviewS
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, delay: 0.2 }}
-            className="flex justify-center items-center gap-4"
+            className="flex flex-col sm:flex-row justify-center items-center gap-3 md:gap-4"
           >
             <Button 
               variant="secondary" 
               onClick={onBack}
+              className="w-full sm:w-auto"
             >
               다시 대화하기
             </Button>
@@ -197,6 +198,7 @@ export default function ReviewStep({ chatMessages, onComplete, onBack }: ReviewS
                   };
                   fetchDiary();
                 }}
+                className="w-full sm:w-auto"
               >
                 다시 시도
               </Button>
@@ -206,6 +208,7 @@ export default function ReviewStep({ chatMessages, onComplete, onBack }: ReviewS
                 onClick={handleSubmit}
                 disabled={!content.trim()}
                 icon={{ component: <CreateIcon color='#ffffff' width={18} height={18} />, position: 'left' }}
+                className="w-full sm:w-auto"
               >
                 평행일기 생성하기
               </Button>

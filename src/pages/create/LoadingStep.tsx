@@ -29,16 +29,15 @@ export default function LoadingStep({ diaryContent: _diaryContent, onComplete }:
   }, [onComplete, navigate]);
 
   return (
-    <div className="relative z-10 min-h-screen flex items-center justify-center text-center p-5">
+    <div className="relative z-10 min-h-screen flex items-center justify-center text-center px-4 md:px-6 lg:px-5 py-6 md:py-8">
       {/* 포탈 애니메이션 - 가운데 원 */}
       <motion.div
-        className="relative flex items-center justify-center"
-        style={{ width: '300px', height: '300px' }}
+        className="relative flex items-center justify-center w-[250px] h-[250px] sm:w-[280px] sm:h-[280px] md:w-[300px] md:h-[300px]"
       >
         {[...Array(3)].map((_, i) => (
           <motion.div
             key={i}
-            className="absolute inset-0 rounded-full border-4 border-white"
+            className="absolute inset-0 rounded-full border-[3px] md:border-4 border-white"
             style={{
               opacity: 0.3 - i * 0.1,
             }}
@@ -55,9 +54,9 @@ export default function LoadingStep({ diaryContent: _diaryContent, onComplete }:
         ))}
         
         {/* 원 안의 텍스트 */}
-        <div className="absolute inset-0 flex flex-col items-center justify-center p-8">
+        <div className="absolute inset-0 flex flex-col items-center justify-center p-6 md:p-8">
           <motion.h1
-            className="text-2xl font-bold text-white mb-3"
+            className="text-xl md:text-2xl font-bold text-white mb-2 md:mb-3"
             animate={{
               opacity: [0.4, 1, 0.4],
             }}
@@ -71,7 +70,7 @@ export default function LoadingStep({ diaryContent: _diaryContent, onComplete }:
           </motion.h1>
 
           <motion.p
-            className="text-white text-base"
+            className="text-white text-sm md:text-base leading-relaxed"
             animate={{
               opacity: [0.4, 1, 0.4],
             }}

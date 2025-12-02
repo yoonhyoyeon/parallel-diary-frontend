@@ -159,7 +159,7 @@ export default function DiaryListPage() {
   });
 
   return (
-    <div className="min-h-screen bg-white max-w-[1200px] mx-auto py-[80px] px-5">
+    <div className="min-h-screen bg-white max-w-[1200px] mx-auto py-10 md:py-16 lg:py-[80px] px-4 md:px-6 lg:px-5">
       <div className="fixed inset-0 z-0">
         <ParticleBackground />
         <GradientBackground />
@@ -167,22 +167,22 @@ export default function DiaryListPage() {
       <div className="relative z-10">
         {/* 헤더와 뒤로가기 버튼 */}
         <motion.div 
-          className="flex items-center gap-4 mb-[27px]"
+          className="flex items-center gap-3 md:gap-4 mb-6 md:mb-[27px]"
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
         >
           <Link to="/" className="flex items-center justify-center hover:opacity-70 transition-opacity">
-            <ArrowLeftIcon width={24} height={24} className="text-soft-black" />
+            <ArrowLeftIcon width={20} height={20} className="text-soft-black md:w-6 md:h-6" />
           </Link>
-          <h1 className="text-2xl lg:text-[36px] font-bold text-black">내 일기</h1>
+          <h1 className="text-xl md:text-2xl lg:text-[36px] font-bold text-black">내 일기</h1>
         </motion.div>
 
       {/* 탭 */}
-      <div className="mb-[40px]">
-        <div className="flex text-[20px]">
-          <div className={`${activeTab === 'all' ? 'border-[#745ede] text-[#745ede]' : 'text-[#878787] border-[#D9D4FF]'} border-b-2 flex items-center justify-center w-[200px] h-[60px] font-semibold cursor-pointer`} onClick={() => handleTabChange('all')}>전체</div>
-          <div className={`${activeTab === 'date' ? 'border-[#745ede] text-[#745ede]' : 'text-[#878787] border-[#D9D4FF]'} border-b-2 flex items-center justify-center w-[200px] h-[60px] font-semibold cursor-pointer`} onClick={() => handleTabChange('date')}>날짜별</div>
+      <div className="mb-8 md:mb-10 lg:mb-[40px]">
+        <div className="flex text-base md:text-lg lg:text-[20px]">
+          <div className={`${activeTab === 'all' ? 'border-[#745ede] text-[#745ede]' : 'text-[#878787] border-[#D9D4FF]'} border-b-2 flex items-center justify-center flex-1 md:w-[180px] lg:w-[200px] h-12 md:h-14 lg:h-[60px] font-semibold cursor-pointer`} onClick={() => handleTabChange('all')}>전체</div>
+          <div className={`${activeTab === 'date' ? 'border-[#745ede] text-[#745ede]' : 'text-[#878787] border-[#D9D4FF]'} border-b-2 flex items-center justify-center flex-1 md:w-[180px] lg:w-[200px] h-12 md:h-14 lg:h-[60px] font-semibold cursor-pointer`} onClick={() => handleTabChange('date')}>날짜별</div>
         </div>
       </div>
 
@@ -198,7 +198,7 @@ export default function DiaryListPage() {
               ease: [0.22, 1, 0.36, 1],
               opacity: { duration: 0.7 }
             }}
-            className="mb-[64px] max-w-[600px]"
+            className="mb-12 md:mb-16 lg:mb-[64px] max-w-full md:max-w-[600px]"
           >
             <Calendar 
               selectedDate={selectedDate} 
@@ -219,9 +219,9 @@ export default function DiaryListPage() {
           ease: [0.22, 1, 0.36, 1],
           delay: activeTab === 'date' ? 0.3 : 0.1
         }}
-        className="mb-[20px]"
+        className="mb-4 md:mb-5 lg:mb-[20px]"
       >
-        <span className="text-[18px]">
+        <span className="text-base md:text-[18px]">
           <span className="font-bold text-[#745ede]">7개</span>
           <span className="font-medium text-[#595959]">의 일기</span>
         </span>
@@ -242,12 +242,11 @@ export default function DiaryListPage() {
             }
           }
         }}
-        className="flex flex-col gap-[20px]"
+        className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-5 lg:gap-[20px]"
       >
-        {Array.from({ length: Math.ceil(diaryEntries.length / 3) }).map((_, rowIndex) => (
-          <motion.div 
-            key={rowIndex} 
-            className="flex gap-[20px]"
+        {diaryEntries.map((entry) => (
+          <motion.div
+            key={entry.id}
             variants={{
               hidden: { opacity: 0, y: 15, scale: 0.96 },
               visible: { 
@@ -261,17 +260,14 @@ export default function DiaryListPage() {
               }
             }}
           >
-            {diaryEntries.slice(rowIndex * 3, rowIndex * 3 + 3).map((entry) => (
-              <Link 
-                to="/diaries/$id" 
-                params={{ id: entry.id }} 
-                search={{ fromCreate: undefined }}
-                key={entry.id} 
-                className="flex-1"
-              >
-                <DiaryCard entry={entry} />
-              </Link>
-            ))}
+            <Link 
+              to="/diaries/$id" 
+              params={{ id: entry.id }} 
+              search={{ fromCreate: undefined }}
+              className="block h-full"
+            >
+              <DiaryCard entry={entry} />
+            </Link>
           </motion.div>
         ))}
       </motion.div>
@@ -283,22 +279,22 @@ export default function DiaryListPage() {
 // 일기 카드 컴포넌트
 function DiaryCard({ entry }: { entry: DiaryEntry }) {
   return (
-    <div className="bg-white backdrop-blur-[250px] rounded-[24px] px-[24px] py-[28px] hover:shadow-[0px_18px_40px_0px_rgba(0,0,0,0.16)] hover:scale-105 transition-all duration-300">
-      <div className="flex flex-col gap-[16px]">
+    <div className="h-full bg-white backdrop-blur-[250px] rounded-2xl md:rounded-[20px] lg:rounded-[24px] px-5 md:px-6 lg:px-[24px] py-6 md:py-7 lg:py-[28px] hover:shadow-[0px_18px_40px_0px_rgba(0,0,0,0.16)] hover:scale-105 transition-all duration-300">
+      <div className="flex flex-col gap-3 md:gap-4 lg:gap-[16px]">
         {/* 날짜 */}
-        <p className="text-[14px] text-[#a09d9d] font-normal leading-[1.4]">
+        <p className="text-xs md:text-[13px] lg:text-[14px] text-[#a09d9d] font-normal leading-[1.4]">
           {entry.date}
         </p>
 
         {/* 태그들 */}
-        <div className="flex gap-[8px] flex-wrap">
+        <div className="flex gap-2 lg:gap-[8px] flex-wrap">
           {entry.tags.map((tag, index) => (
             <Tag key={index} text={tag} />
           ))}
         </div>
 
         {/* 일기 내용 */}
-        <p className="text-[16px] text-[#181818] font-normal leading-[1.4] line-clamp-2">
+        <p className="text-sm md:text-[15px] lg:text-[16px] text-[#181818] font-normal leading-[1.4] line-clamp-2">
           {entry.content}
         </p>
       </div>

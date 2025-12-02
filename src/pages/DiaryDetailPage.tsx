@@ -34,7 +34,7 @@ export default function DiaryDetailPage() {
   });
 
   return (
-    <div className="h-full max-w-[1030px] mx-auto px-5 py-10 flex flex-col">
+    <div className="min-h-screen max-w-[1030px] mx-auto px-4 md:px-6 lg:px-5 py-6 md:py-8 lg:py-10 flex flex-col">
         {/* 헤더 - 타이틀과 뒤로가기 버튼 */}
         {!fromCreate && (
           <motion.div
@@ -42,7 +42,7 @@ export default function DiaryDetailPage() {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -20 }}
             transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
-            className="flex items-center gap-4 mb-10 shrink-0"
+            className="flex items-center gap-3 md:gap-4 mb-6 md:mb-8 lg:mb-10 shrink-0"
           >
             <button 
               onClick={() => window.history.back()}
@@ -50,7 +50,7 @@ export default function DiaryDetailPage() {
             >
               <ArrowLeftIcon width={18} height={18} className="text-[#090615]" />
             </button>
-            <h1 className="text-[30px] font-bold text-soft-black">원본 일기</h1>
+            <h1 className="text-xl md:text-2xl lg:text-[30px] font-bold text-soft-black">원본 일기</h1>
           </motion.div>
         )}
 
@@ -60,31 +60,31 @@ export default function DiaryDetailPage() {
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: 20 }}
           transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
-          className="bg-white rounded-[36px] shadow-[0px_0px_30px_0px_rgba(0,0,0,0.06)] flex-1 flex flex-col mb-10 min-h-0"
+          className="bg-white rounded-2xl md:rounded-3xl lg:rounded-[36px] shadow-[0px_0px_30px_0px_rgba(0,0,0,0.06)] flex-1 flex flex-col mb-[120px] min-h-[400px]"
         >
-          <div className="p-[60px] pt-[50px] flex flex-col flex-1 min-h-0">
+          <div className="p-6 md:p-10 lg:p-[60px] lg:pt-[50px] flex flex-col flex-1 min-h-0">
             {/* 날짜와 시간 */}
-            <div className="pb-4 border-b border-gray-200 shrink-0">
-              <p className="text-base text-gray-500">
+            <div className="pb-3 md:pb-4 border-b border-gray-200 shrink-0">
+              <p className="text-sm md:text-base text-gray-500">
                 {dateString} • {timeString}
               </p>
             </div>
             
             {/* 일기 내용 - 스크롤 가능 영역 */}
-            <div className="w-full flex-1 min-h-0 overflow-y-auto text-[18px] text-[#181818] leading-[160%] pr-2 py-6">
+            <div className="w-full flex-1 min-h-0 overflow-y-auto text-base md:text-[17px] lg:text-[18px] text-[#181818] leading-[160%] pr-2 py-4 md:py-5 lg:py-6">
               {diaryData.content}
             </div>
 
             {/* 주요 순간들 - 하단 고정 */}
-            <div className="flex flex-col gap-5 shrink-0 pt-6 border-t border-gray-200">
-              <p className="text-[18px] font-bold text-black">주요 순간들</p>
-              <div className="flex gap-3 flex-wrap">
+            <div className="flex flex-col gap-3 md:gap-4 lg:gap-5 shrink-0 pt-4 md:pt-5 lg:pt-6 border-t border-gray-200">
+              <p className="text-base md:text-[17px] lg:text-[18px] font-bold text-black">주요 순간들</p>
+              <div className="flex gap-2 md:gap-3 flex-wrap">
                 {diaryData.moments.map((moment, index) => (
                   <div
                     key={index}
-                    className="bg-[#eae8ff] flex items-center justify-center px-5 py-3 rounded-[8px]"
+                    className="bg-[#eae8ff] flex items-center justify-center px-4 md:px-5 py-2 md:py-3 rounded-lg"
                   >
-                    <p className="text-[16px] font-bold text-[#745ede] whitespace-nowrap">
+                    <p className="text-sm md:text-[15px] lg:text-[16px] font-bold text-[#745ede] whitespace-nowrap">
                       {moment}
                     </p>
                   </div>
@@ -94,8 +94,9 @@ export default function DiaryDetailPage() {
           </div>
         </motion.div>
 
-        {/* 버튼 영역 */}
-        <div className="flex justify-center gap-3 shrink-0">
+        {/* 버튼 영역 - 하단 고정 */}
+        <div className="fixed bottom-0 left-0 right-0 bg-gradient-to-t from-white via-white/95 to-transparent md:bg-none pt-8 pb-6 px-4 md:px-6 z-50">
+          <div className="max-w-[1030px] mx-auto flex flex-col sm:flex-row justify-center gap-3">
           {/* Create에서 온 경우 목록으로 버튼 */}
           {fromCreate && (
             <motion.div
@@ -103,6 +104,7 @@ export default function DiaryDetailPage() {
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: 20 }}
               transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1], delay: 0.2 }}
+              className="w-full sm:w-auto"
             >
               <Button 
                 variant="secondary" 
@@ -112,6 +114,7 @@ export default function DiaryDetailPage() {
                     search: { tab: 'all', date: undefined },
                   });
                 }}
+                className="w-full sm:w-auto"
               >
                 일기목록으로 이동
               </Button>
@@ -125,6 +128,7 @@ export default function DiaryDetailPage() {
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: 20 }}
               transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1], delay: 0.2 }}
+              className="w-full sm:w-auto"
             >
               <Button 
                 variant="primary" 
@@ -137,13 +141,13 @@ export default function DiaryDetailPage() {
                   });
                 }} 
                 icon={{ component: <ConversionIcon width={18} height={18} />, position: 'right' }}
+                className="w-full sm:w-auto"
               >
                 평행일기 보기
               </Button>
             </motion.div>
           )}
-
-          
+          </div>
         </div>
     </div>
   );

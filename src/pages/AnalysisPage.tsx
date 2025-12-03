@@ -48,8 +48,8 @@ export default function AnalysisPage() {
 
           {/* 오른쪽 컬럼 */}
           <div className="flex flex-col gap-6 min-w-0">
-            <MonotonyTrendCard />
             <DiaryStatusCard />
+            <MonotonyTrendCard />
             <ScenarioRecommendCard />
           </div>
         </div>

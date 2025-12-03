@@ -2,11 +2,10 @@ import { motion } from 'framer-motion';
 import { useMemo } from 'react';
 
 interface ContributionCalendarProps {
-  // 나중에 실제 데이터로 교체
   data?: { date: string; hasEntry: boolean }[];
 }
 
-export default function ContributionCalendar({}: ContributionCalendarProps) {
+export default function ContributionCalendar({ data }: ContributionCalendarProps) {
   // 올해 1월 1일부터 오늘까지의 날짜 데이터 생성
   const contributionData = useMemo(() => {
     const dataArray = [];
@@ -15,12 +14,22 @@ export default function ContributionCalendar({}: ContributionCalendarProps) {
     
     const daysDiff = Math.floor((today.getTime() - startOfYear.getTime()) / (1000 * 60 * 60 * 24));
     
+    // API 데이터를 Map으로 변환 (빠른 조회를 위해)
+    const apiDataMap = new Map<string, boolean>();
+    if (data) {
+      data.forEach(item => {
+        const date = new Date(item.date);
+        const dateKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+        apiDataMap.set(dateKey, item.hasEntry);
+      });
+    }
+    
     for (let i = 0; i <= daysDiff; i++) {
       const date = new Date(startOfYear);
       date.setDate(startOfYear.getDate() + i);
       
-      // 임시 데이터 (실제로는 API에서 가져올 데이터)
-      const hasEntry = Math.random() > 0.3;
+      const dateKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+      const hasEntry = apiDataMap.get(dateKey) ?? false;
       
       dataArray.push({
         date,
@@ -30,7 +39,7 @@ export default function ContributionCalendar({}: ContributionCalendarProps) {
     }
     
     return dataArray;
-  }, []);
+  }, [data]);
 
   // 주 단위로 그룹화
   const weeks = useMemo(() => {
@@ -84,7 +93,7 @@ export default function ContributionCalendar({}: ContributionCalendarProps) {
   }, [weeks]);
 
   return (
-    <div className="overflow-x-auto overflow-y-visible padding-1">
+    <div className="overflow-x-auto overflow-y-visible padding-1 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:'none'] [scrollbar-width:'none']">
       {/* 월 라벨 */}
       <div className="relative h-4 mb-2 pl-6">
         {monthLabels.map((label) => (

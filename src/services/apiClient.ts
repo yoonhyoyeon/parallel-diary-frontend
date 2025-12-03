@@ -14,8 +14,8 @@ interface RequestOptions extends RequestInit {
   skipAuth?: boolean;
 }
 
-export async function apiClient<T>(path: string, options: RequestOptions = {}, type: 'api' | 'ai' = 'api'): Promise<T> {
-  const baseUrl = type === 'api' ? import.meta.env.VITE_API_BASE_URL ?? '' : import.meta.env.VITE_AI_API_BASE_URL ?? '';
+export async function apiClient<T>(path: string, options: RequestOptions = {}, type: 'api' | 'ai' | 'backend' = 'api'): Promise<T> {
+  const baseUrl = type === 'ai' ? (import.meta.env.VITE_AI_API_BASE_URL ?? '') : (import.meta.env.VITE_API_BASE_URL ?? '');
   if (!baseUrl) {
     throw new ApiError(`${type} API 기본 URL이 설정되지 않았습니다. ${type === 'api' ? 'VITE_API_BASE_URL' : 'VITE_AI_API_BASE_URL'}을 확인해주세요.`, 0);
   }
@@ -25,6 +25,14 @@ export async function apiClient<T>(path: string, options: RequestOptions = {}, t
 
   if (!isFormData && !headers.has('Content-Type')) {
     headers.set('Content-Type', 'application/json');
+  }
+
+  // 토큰 자동 주입 (skipAuth가 true가 아닌 경우)
+  if (!options.skipAuth && (type === 'api' || type === 'backend')) {
+    const token = localStorage.getItem('accessToken');
+    if (token) {
+      headers.set('Authorization', `Bearer ${token}`);
+    }
   }
 
   const response = await fetch(`${baseUrl}${path}`, {

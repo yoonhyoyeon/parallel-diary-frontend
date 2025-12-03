@@ -1,6 +1,8 @@
 import { motion } from 'framer-motion';
 import { useNavigate } from '@tanstack/react-router';
-import logo from '@/assets/images/home_logo_desktop.png';
+import { useState, useEffect } from 'react';
+import logoDesktop from '@/assets/images/home_logo_desktop.png';
+import logoMobile from '@/assets/images/home_logo_mobile.png';
 import cristal_ball from '@/assets/icons/crystal_ball.png';
 import HomeButton from '@/components/HomeButton';
 import PlusIcon from '@/assets/icons/plus.svg?react';
@@ -13,14 +15,27 @@ import { useAuth } from '@/contexts/AuthContext';
 export default function HomePage() {
   const { logout, user } = useAuth();
   const navigate = useNavigate();
+  const [isMobile, setIsMobile] = useState(false);
+
+  // 모바일 감지
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
 
   const handleLogout = () => {
     logout();
     navigate({ to: '/auth/login' });
   };
+  
+  const logo = isMobile ? logoMobile : logoDesktop;
 
   return (
-    <main className="min-h-screen flex flex-col md:items-center md:justify-center px-4 md:px-6 lg:px-5 bg-white relative overflow-hidden pt-24 md:pt-0 pb-[280px] md:pb-0">
+    <main className="min-h-screen flex items-center justify-center px-4 md:px-6 lg:px-5 bg-white relative overflow-hidden">
       <ParticleBackground />
       <GradientBackground />
 
@@ -39,9 +54,9 @@ export default function HomePage() {
         </a>
       </div>
 
-      <div className="w-full md:w-[700px] text-center max-w-7xl flex flex-col items-center relative z-10">
+      <div className="w-full md:w-[700px] text-center max-w-7xl flex flex-col items-center min-h-screen justify-between relative z-10 mx-auto py-20">
         <motion.img 
-          className="w-full max-w-[350px] sm:max-w-[450px] md:max-w-[550px] lg:max-w-[600px] px-4 md:px-0 mb-8 md:mb-10" 
+          className="w-full max-w-[350px] sm:max-w-[450px] md:max-w-[550px] lg:max-w-[600px] px-4 md:px-0 mb-6 md:mb-8" 
           src={logo} 
           alt="Parallel Diary"
           initial={{ opacity: 0, y: -20 }}
@@ -64,9 +79,9 @@ export default function HomePage() {
           </div>
         </motion.div>
 
-        {/* 메뉴 버튼들 - 데스크톱 */}
+        {/* 메뉴 버튼들 */}
         <motion.div 
-          className="hidden md:flex md:flex-row gap-4 md:gap-6 w-full"
+          className="flex flex-col md:flex-row gap-4 md:gap-6 w-full"
           initial="hidden"
           animate="visible"
           variants={{
@@ -80,8 +95,9 @@ export default function HomePage() {
             }
           }}
         >
+          {/* 일기 쓰기 - 모바일: 전체 너비, 데스크톱: flex-1 */}
           <motion.div 
-            className="flex-1"
+            className="w-full md:flex-1"
             variants={{
               hidden: { opacity: 0, y: 20 },
               visible: { opacity: 1, y: 0 }
@@ -90,71 +106,29 @@ export default function HomePage() {
             <HomeButton to="/create" icon={<PlusIcon width={20} height={20} className="md:w-6 md:h-6" />} label="일기 쓰기" variant="dark" />
           </motion.div>
           
-          <motion.div 
-            className="flex-1"
-            variants={{
-              hidden: { opacity: 0, y: 20 },
-              visible: { opacity: 1, y: 0 }
-            }}
-          >
-            <HomeButton to="/diaries" icon={<BookIcon width={20} height={20} className="md:w-6 md:h-6" />} label="내 일기" />
-          </motion.div>
-          
-          <motion.div 
-            className="flex-1"
-            variants={{
-              hidden: { opacity: 0, y: 20 },
-              visible: { opacity: 1, y: 0 }
-            }}
-          >
-            <HomeButton to="/analysis" icon={<ChartIcon width={20} height={20} className="md:w-6 md:h-6" />} label="나의 일상 분석" />
-          </motion.div>
+          {/* 내 일기 & 나의 일상 분석 - 모바일: 나란히 wrapper, 데스크톱: 개별 */}
+          <div className="flex md:contents gap-4 md:gap-6 w-full">
+            <motion.div 
+              className="flex-1"
+              variants={{
+                hidden: { opacity: 0, y: 20 },
+                visible: { opacity: 1, y: 0 }
+              }}
+            >
+              <HomeButton to="/diaries" icon={<BookIcon width={20} height={20} className="md:w-6 md:h-6" />} label="내 일기" />
+            </motion.div>
+            <motion.div 
+              className="flex-1"
+              variants={{
+                hidden: { opacity: 0, y: 20 },
+                visible: { opacity: 1, y: 0 }
+              }}
+            >
+              <HomeButton to="/analysis" icon={<ChartIcon width={20} height={20} className="md:w-6 md:h-6" />} label="나의 일상 분석" />
+            </motion.div>
+          </div>
         </motion.div>
       </div>
-      
-      {/* 메뉴 버튼들 - 모바일 (하단 고정) */}
-      <motion.div 
-        className="md:hidden fixed bottom-0 left-0 right-0 px-4 pb-6 pt-4 z-50"
-        initial="hidden"
-        animate="visible"
-        variants={{
-          hidden: { opacity: 0 },
-          visible: {
-            opacity: 1,
-            transition: {
-              delayChildren: 0.4,
-              staggerChildren: 0.1
-            }
-          }
-        }}
-      >
-        <div className="flex flex-col gap-3 w-full max-w-[700px] mx-auto">
-          <motion.div 
-            className="w-full"
-            variants={{
-              hidden: { opacity: 0, y: 20 },
-              visible: { opacity: 1, y: 0 }
-            }}
-          >
-            <HomeButton to="/create" icon={<PlusIcon width={20} height={20} />} label="일기 쓰기" variant="dark" />
-          </motion.div>
-          
-          <motion.div 
-            className="flex gap-3 w-full"
-            variants={{
-              hidden: { opacity: 0, y: 20 },
-              visible: { opacity: 1, y: 0 }
-            }}
-          >
-            <div className="flex-1">
-              <HomeButton to="/diaries" icon={<BookIcon width={20} height={20} />} label="내 일기" />
-            </div>
-            <div className="flex-1">
-              <HomeButton to="/analysis" icon={<ChartIcon width={20} height={20} />} label="나의 일상 분석" />
-            </div>
-          </motion.div>
-        </div>
-      </motion.div>
     </main>
   );
 }

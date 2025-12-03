@@ -1,8 +1,11 @@
 import { useParams, useNavigate, useSearch } from '@tanstack/react-router';
 import { motion } from 'framer-motion';
+import { useState, useEffect } from 'react';
 import Button from '@/components/Button';
 import ConversionIcon from '@/assets/icons/conversion.svg?react';
 import ArrowLeftIcon from '@/assets/icons/arrow_left.svg?react';
+import DiaryDetailSkeleton from '@/components/DiaryDetailSkeleton';
+import { getDiary, type Diary } from '@/services/diaryService';
 
 export default function DiaryDetailPage() {
   const { id } = useParams({ from: '/protected/diaries/$id/' });
@@ -10,28 +13,45 @@ export default function DiaryDetailPage() {
   const search = useSearch({ strict: false });
   const fromCreate = search.fromCreate === 1;
   
-  // 샘플 데이터 (실제로는 API에서 가져올 데이터)
-  const diaryData = {
-    id: id || '1',
-    date: '2025년 11월 7일',
-    content: '오늘은 아침에 일어나자마자 창문을 열었는데, 공기가 생각보다 차가워서 깜짝 놀랐다.커피를 내리면서 오늘은 꼭 해야 할 일들을 머릿속으로 정리했다.점심엔 오랜만에 밖에서 밥을 먹었는데, 혼자 먹는 밥이 이상하게 편안했다.카페에 들러 앉아있다가 우연히 들은 음악이 마음에 들어서 바로 플레이리스트에 추가했다.저녁쯤엔 갑자기 비가 내려서 버스를 타고 돌아왔는데, 창밖이 흐릿하게 번지는 게 예뻤다.집에 도착하니 생각보다 피곤해서 샤워 후 바로 누웠다.',
-    moments: ['출근', '회의', '넷플릭스'], // 주요 순간들
-    hasParallel: true, // 평행일기 존재 여부
-  };
+  const [diary, setDiary] = useState<Diary | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  
+  // API로부터 일기 데이터 가져오기
+  useEffect(() => {
+    const fetchDiary = async () => {
+      try {
+        setIsLoading(true);
+        setError(null);
+        const data = await getDiary(id);
+        setDiary(data);
+      } catch (err) {
+        console.error('일기 조회 실패:', err);
+        setError('일기를 불러오는데 실패했습니다.');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    
+    fetchDiary();
+  }, [id]);
+  
+  if (!diary && !isLoading && !error) {
+    return null;
+  }
 
   // 날짜와 시간 포맷팅
-  const currentDate = new Date();
-  const dateString = currentDate.toLocaleDateString('ko-KR', {
+  const dateString = diary ? new Date(diary.writtenAt).toLocaleDateString('ko-KR', {
     year: 'numeric',
     month: 'long',
     day: 'numeric',
     weekday: 'long'
-  });
-  const timeString = currentDate.toLocaleTimeString('ko-KR', {
+  }) : '';
+  const timeString = diary ? new Date(diary.writtenAt).toLocaleTimeString('ko-KR', {
     hour: '2-digit',
     minute: '2-digit',
     hour12: true
-  });
+  }) : '';
 
   return (
     <div className="min-h-screen max-w-[1030px] mx-auto px-4 md:px-6 lg:px-5 py-6 md:py-8 lg:py-10 flex flex-col">
@@ -62,36 +82,49 @@ export default function DiaryDetailPage() {
           transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
           className="bg-white rounded-2xl md:rounded-3xl lg:rounded-[36px] shadow-[0px_0px_30px_0px_rgba(0,0,0,0.06)] flex-1 flex flex-col mb-[120px]"
         >
-          <div className="p-6 md:p-10 lg:p-[60px] lg:pt-[50px] flex flex-col flex-1">
-            {/* 날짜와 시간 */}
-            <div className="pb-3 md:pb-4 border-b border-gray-200 shrink-0">
-              <p className="text-sm md:text-base text-gray-500">
-                {dateString} • {timeString}
-              </p>
+          {isLoading ? (
+            /* 로딩 상태 */
+            <DiaryDetailSkeleton />
+          ) : error ? (
+            /* 에러 상태 */
+            <div className="flex items-center justify-center flex-1">
+              <p className="text-base md:text-lg text-red-500">{error}</p>
             </div>
-            
-            {/* 일기 내용 */}
-            <div className="w-full flex-1 overflow-y-auto text-base md:text-[17px] lg:text-[18px] text-[#181818] leading-[160%] pr-2 py-4 md:py-5 lg:py-6">
-              {diaryData.content}
-            </div>
-
-            {/* 주요 순간들 - 하단 고정 */}
-            <div className="flex flex-col gap-3 md:gap-4 lg:gap-5 shrink-0 pt-4 md:pt-5 lg:pt-6 border-t border-gray-200">
-              <p className="text-base md:text-[17px] lg:text-[18px] font-bold text-black">주요 순간들</p>
-              <div className="flex gap-2 md:gap-3 flex-wrap">
-                {diaryData.moments.map((moment, index) => (
-                  <div
-                    key={index}
-                    className="bg-[#eae8ff] flex items-center justify-center px-4 md:px-5 py-2 md:py-3 rounded-lg"
-                  >
-                    <p className="text-sm md:text-[15px] lg:text-[16px] font-bold text-[#745ede] whitespace-nowrap">
-                      {moment}
-                    </p>
-                  </div>
-                ))}
+          ) : diary ? (
+            /* 일기 내용 */
+            <div className="p-6 md:p-10 lg:p-[60px] lg:pt-[50px] flex flex-col flex-1">
+              {/* 날짜와 시간 */}
+              <div className="pb-3 md:pb-4 border-b border-gray-200 shrink-0">
+                <p className="text-sm md:text-base text-gray-500">
+                  {dateString} • {timeString}
+                </p>
               </div>
+              
+              {/* 일기 내용 */}
+              <div className="w-full flex-1 overflow-y-auto text-base md:text-[17px] lg:text-[18px] text-[#181818] leading-[160%] pr-2 py-4 md:py-5 lg:py-6 break-words">
+                {diary.content}
+              </div>
+
+              {/* 주요 순간들 - 하단 고정 */}
+              {diary.keywords && diary.keywords.length > 0 && (
+                <div className="flex flex-col gap-3 md:gap-4 lg:gap-5 shrink-0 pt-4 md:pt-5 lg:pt-6 border-t border-gray-200">
+                  <p className="text-base md:text-[17px] lg:text-[18px] font-bold text-black">주요 순간들</p>
+                  <div className="flex gap-2 md:gap-3 flex-wrap">
+                    {diary.keywords.map((keyword, index) => (
+                      <div
+                        key={index}
+                        className="bg-[#eae8ff] flex items-center justify-center px-4 md:px-5 py-2 md:py-3 rounded-lg"
+                      >
+                        <p className="text-sm md:text-[15px] lg:text-[16px] font-bold text-[#745ede] whitespace-nowrap">
+                          {keyword}
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
-          </div>
+          ) : null}
         </motion.div>
 
         {/* 버튼 영역 - 하단 고정 */}
@@ -122,7 +155,7 @@ export default function DiaryDetailPage() {
           )}
 
           {/* 평행일기 보기 버튼 */}
-          {diaryData.hasParallel && (
+          {!isLoading && diary?.parallelDiary && (
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
@@ -135,7 +168,7 @@ export default function DiaryDetailPage() {
                 onClick={() => {
                   navigate({
                     to: '/diaries/$id/parallel',
-                    params: { id: diaryData.id },
+                    params: { id: diary.parallelDiary!.id },
                     search: { fromCreate: fromCreate ? 1 : undefined },
                     replace: true,
                   });

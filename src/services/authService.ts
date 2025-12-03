@@ -23,6 +23,7 @@ export async function registerUser(payload: RegisterRequest) {
   return apiClient<RegisterResponse>('/auth/register', {
     method: 'POST',
     body: JSON.stringify(payload),
+    skipAuth: true,
   });
 }
 
@@ -48,6 +49,7 @@ export async function loginUser(payload: LoginRequest) {
   return apiClient<LoginResponse>('/auth/login', {
     method: 'POST',
     body: JSON.stringify(payload),
+    skipAuth: true,
   });
 }
 
@@ -61,11 +63,8 @@ export interface UserProfile {
   updatedAt: string;
 }
 
-export async function getProfile(token: string) {
+export async function getProfile() {
   return apiClient<UserProfile>('/auth/profile', {
     method: 'GET',
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
   });
 }

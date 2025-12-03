@@ -1,8 +1,12 @@
 import { useParams, useNavigate, useSearch } from '@tanstack/react-router';
 import { motion } from 'framer-motion';
+import { useState, useEffect } from 'react';
 import Button from '@/components/Button';
 import ConversionIcon from '@/assets/icons/conversion.svg?react';
 import ArrowLeftIcon from '@/assets/icons/arrow_left.svg?react';
+import ScenarioCard from '@/components/ScenarioCard';
+import DiaryDetailSkeleton from '@/components/DiaryDetailSkeleton';
+import { getParallelDiary, type ParallelDiaryDetail } from '@/services/diaryService';
 
 export default function ParallelDetailPage() {
   const { id } = useParams({ from: '/protected/diaries/$id/parallel' });
@@ -10,31 +14,45 @@ export default function ParallelDetailPage() {
   const search = useSearch({ strict: false });
   const fromCreate = search.fromCreate === 1;
 
-  // 샘플 데이터 (실제로는 API에서 가져올 데이터)
-  const diaryData = {
-    id: id || '1',
-    content: '오늘은 아침에 일어나자마자 창문을 열었는데, 공기가 생각보다 차가워서 깜짝 놀랐다.커피를 내리면서 오늘은 꼭 해야 할 일들을 머릿속으로 정리했다.점심엔 오랜만에 밖에서 밥을 먹었는데, 혼자 먹는 밥이 이상하게 편안했다.카페에 들러 앉아있다가 우연히 들은 음악이 마음에 들어서 바로 플레이리스트에 추가했다.저녁쯤엔 갑자기 비가 내려서 버스를 타고 돌아왔는데, 창밖이 흐릿하게 번지는 게 예뻤다.집에 도착하니 생각보다 피곤해서 샤워 후 바로 누웠다.',
-    moments: ['출근', '회의', '넷플릭스'],
-    recommendations: [
-      { emoji: '😴', title: '일찍 자기', description: '일찍 자고 활기찬 하루를 시작해보세요!' },
-      { emoji: '🍰', title: '케이크 먹기', description: '케이크를 먹으면 기분이 좋아져요!' },
-      { emoji: '🍰', title: '케이크 먹기', description: '케이크를 먹으면 기분이 좋아져요!' },
-    ],
-  };
+  const [parallelDiary, setParallelDiary] = useState<ParallelDiaryDetail | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  
+  // API로부터 평행일기 데이터 가져오기
+  useEffect(() => {
+    const fetchParallelDiary = async () => {
+      try {
+        setIsLoading(true);
+        setError(null);
+        const data = await getParallelDiary(id);
+        setParallelDiary(data);
+      } catch (err) {
+        console.error('평행일기 조회 실패:', err);
+        setError('평행일기를 불러오는데 실패했습니다.');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    
+    fetchParallelDiary();
+  }, [id]);
+  
+  if (!parallelDiary && !isLoading && !error) {
+    return null;
+  }
 
-  // 날짜와 시간 포맷팅
-  const currentDate = new Date();
-  const dateString = currentDate.toLocaleDateString('ko-KR', {
+  // 날짜와 시간 포맷팅 (원본 일기의 날짜 사용)
+  const dateString = parallelDiary ? new Date(parallelDiary.diary.writtenAt).toLocaleDateString('ko-KR', {
     year: 'numeric',
     month: 'long',
     day: 'numeric',
     weekday: 'long'
-  });
-  const timeString = currentDate.toLocaleTimeString('ko-KR', {
+  }) : '';
+  const timeString = parallelDiary ? new Date(parallelDiary.diary.writtenAt).toLocaleTimeString('ko-KR', {
     hour: '2-digit',
     minute: '2-digit',
     hour12: true
-  });
+  }) : '';
 
 
   return (
@@ -68,19 +86,41 @@ export default function ParallelDetailPage() {
           transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
           className="bg-[#100b27] rounded-2xl md:rounded-3xl lg:rounded-[36px] flex-1 flex flex-col min-h-[400px]"
         >
-          <div className="p-6 md:p-10 lg:p-[60px] lg:pt-[50px] flex flex-col flex-1 min-h-0">
-            {/* 날짜와 시간 */}
-            <div className="mb-4 md:mb-5 lg:mb-6 pb-3 md:pb-4 border-b border-[rgba(198,198,198,0.3)] shrink-0">
-              <p className="text-sm md:text-base text-[#C6C6C6]">
-                {dateString} • {timeString}
-              </p>
+          {isLoading ? (
+            /* 로딩 상태 - 다크 테마 스켈레톤 */
+            <div className="p-6 md:p-10 lg:p-[60px] lg:pt-[50px] flex flex-col flex-1">
+              <div className="pb-3 md:pb-4 border-b border-[rgba(198,198,198,0.2)] shrink-0">
+                <div className="h-4 md:h-5 w-64 bg-white/10 rounded animate-pulse" />
+              </div>
+              <div className="flex-1 py-4 md:py-5 lg:py-6 flex flex-col gap-3">
+                <div className="h-4 md:h-5 w-full bg-white/10 rounded animate-pulse" />
+                <div className="h-4 md:h-5 w-full bg-white/10 rounded animate-pulse" />
+                <div className="h-4 md:h-5 w-5/6 bg-white/10 rounded animate-pulse" />
+                <div className="h-4 md:h-5 w-full bg-white/10 rounded animate-pulse" />
+                <div className="h-4 md:h-5 w-4/5 bg-white/10 rounded animate-pulse" />
+              </div>
             </div>
-            
-            {/* 일기 내용 - 스크롤 가능 영역 */}
-            <div className="w-full flex-1 overflow-y-auto text-base md:text-[17px] lg:text-[18px] text-white leading-[160%] pr-2">
-              {diaryData.content}
+          ) : error ? (
+            /* 에러 상태 */
+            <div className="flex items-center justify-center flex-1">
+              <p className="text-base md:text-lg text-red-400">{error}</p>
             </div>
-          </div>
+          ) : parallelDiary ? (
+            /* 평행일기 내용 */
+            <div className="p-6 md:p-10 lg:p-[60px] lg:pt-[50px] flex flex-col flex-1 min-h-0">
+              {/* 날짜와 시간 */}
+              <div className="mb-4 md:mb-5 lg:mb-6 pb-3 md:pb-4 border-b border-[rgba(198,198,198,0.3)] shrink-0">
+                <p className="text-sm md:text-base text-[#C6C6C6]">
+                  {dateString} • {timeString}
+                </p>
+              </div>
+              
+              {/* 일기 내용 - 스크롤 가능 영역 */}
+              <div className="w-full flex-1 overflow-y-auto text-base md:text-[17px] lg:text-[18px] text-white leading-[160%] pr-2 break-words">
+                {parallelDiary.content}
+              </div>
+            </div>
+          ) : null}
         </motion.div>
 
         {/* 오른쪽: 주요 순간들 & 색다른 일상 추천 (Figma 프레임) */}
@@ -91,45 +131,75 @@ export default function ParallelDetailPage() {
           transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1], delay: 0.1 }}
           className="bg-[#3a2e72] rounded-2xl md:rounded-[20px] lg:rounded-[24px] w-full lg:w-[395px] flex flex-col min-h-[400px] lg:shrink-0"
         >
-          <div className="p-5 md:p-6 lg:p-7 flex flex-col gap-4 md:gap-5 flex-1 min-h-0">
-            {/* 주요 순간들 */}
-            <div className="flex flex-col gap-3 md:gap-4 lg:gap-5 shrink-0">
-              <p className="text-base md:text-[17px] lg:text-[18px] font-semibold text-white">주요 순간들</p>
-              <div className="flex gap-2 md:gap-3 flex-wrap">
-                {diaryData.moments.map((moment, index) => (
-                  <div
-                    key={index}
-                    className="bg-[#eae8ff] flex items-center justify-center px-4 md:px-5 py-2 md:py-3 rounded-lg"
-                  >
-                    <p className="text-sm md:text-[15px] lg:text-[16px] font-bold text-[#745ede] whitespace-nowrap leading-none">
-                      {moment}
-                    </p>
-                  </div>
-                ))}
+          {isLoading ? (
+            /* 로딩 상태 - 다크 테마 스켈레톤 */
+            <div className="p-5 md:p-6 lg:p-7 flex flex-col gap-4 md:gap-5 flex-1">
+              {/* 주요 순간들 스켈레톤 */}
+              <div className="flex flex-col gap-3 md:gap-4 lg:gap-5 shrink-0">
+                <div className="h-5 md:h-6 w-24 bg-white/10 rounded animate-pulse" />
+                <div className="flex gap-2 md:gap-3 flex-wrap">
+                  <div className="h-10 w-20 bg-white/10 rounded-lg animate-pulse" />
+                  <div className="h-10 w-16 bg-white/10 rounded-lg animate-pulse" />
+                  <div className="h-10 w-24 bg-white/10 rounded-lg animate-pulse" />
+                </div>
+              </div>
+              
+              {/* 색다른 일상 추천 스켈레톤 */}
+              <div className="flex flex-col gap-3 md:gap-4 lg:gap-5 flex-1">
+                <div className="h-5 md:h-6 w-32 bg-white/10 rounded animate-pulse" />
+                <div className="flex flex-col gap-3">
+                  <div className="h-32 w-full bg-white/10 rounded-[24px] animate-pulse" />
+                  <div className="h-32 w-full bg-white/10 rounded-[24px] animate-pulse" />
+                </div>
               </div>
             </div>
+          ) : error ? (
+            /* 에러 상태 */
+            <div className="flex items-center justify-center flex-1">
+              <p className="text-base md:text-lg text-red-400">{error}</p>
+            </div>
+          ) : parallelDiary ? (
+            /* 실제 내용 */
+            <div className="p-5 md:p-6 lg:p-7 flex flex-col gap-4 md:gap-5 flex-1 min-h-0">
+              {/* 주요 순간들 */}
+              {parallelDiary.diary.keywords && parallelDiary.diary.keywords.length > 0 && (
+                <div className="flex flex-col gap-3 md:gap-4 lg:gap-5 shrink-0">
+                  <p className="text-base md:text-[17px] lg:text-[18px] font-semibold text-white">주요 순간들</p>
+                  <div className="flex gap-2 md:gap-3 flex-wrap">
+                    {parallelDiary.diary.keywords.map((keyword, index) => (
+                      <div
+                        key={index}
+                        className="bg-[#eae8ff] flex items-center justify-center px-4 md:px-5 py-2 md:py-3 rounded-lg"
+                      >
+                        <p className="text-sm md:text-[15px] lg:text-[16px] font-bold text-[#745ede] whitespace-nowrap leading-none">
+                          {keyword}
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
 
-            {/* 색다른 일상 추천 */}
-            <div className="flex flex-col gap-3 md:gap-4 lg:gap-5 flex-1 min-h-0">
-              <p className="text-base md:text-[17px] lg:text-[18px] font-semibold text-white">색다른 일상 추천</p>
-              <div className="flex flex-col gap-3 flex-1 min-h-0 overflow-y-auto">
-                {diaryData.recommendations.map((rec, index) => (
-                  <div
-                    key={index}
-                    className="bg-[#100b27] rounded-2xl md:rounded-[20px] lg:rounded-[24px] px-5 md:px-6 lg:px-8 py-4 md:py-5 lg:py-6 flex flex-col gap-2 md:gap-3 shrink-0"
-                  >
-                    <div className="flex items-center gap-2">
-                      <span className="text-lg md:text-[19px] lg:text-[20px]">{rec.emoji}</span>
-                      <p className="text-lg md:text-[19px] lg:text-[20px] font-bold text-white leading-none">{rec.title}</p>
-                    </div>
-                    <p className="text-sm md:text-[15px] lg:text-[16px] text-[#bdb3ff] leading-[1.4]">
-                      {rec.description}
-                    </p>
+              {/* 색다른 일상 추천 */}
+              {parallelDiary.recommendedActivities && parallelDiary.recommendedActivities.length > 0 && (
+                <div className="flex flex-col gap-3 md:gap-4 lg:gap-5 flex-1 min-h-0">
+                  <p className="text-base md:text-[17px] lg:text-[18px] font-semibold text-white">색다른 일상 추천</p>
+                  <div className="flex flex-col gap-3 flex-1 min-h-0 overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:'none'] [scrollbar-width:'none']">
+                    {parallelDiary.recommendedActivities.map((activity, index) => (
+                      <div key={index} className="shrink-0">
+                        <ScenarioCard
+                          emoji={activity.emoji}
+                          title={activity.title}
+                          description={activity.content}
+                          score={50 + index * 5}
+                        />
+                      </div>
+                    ))}
                   </div>
-                ))}
-              </div>
+                </div>
+              )}
             </div>
-          </div>
+          ) : null}
         </motion.div>
       </div>
 
@@ -160,29 +230,31 @@ export default function ParallelDetailPage() {
           </motion.div>
         )}
         {/* 원본 일기 보기 버튼 */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: 20 }}
-          transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1], delay: 0.2 }}
-          className="w-full sm:w-auto"
-        >
-          <Button 
-            variant="primary" 
-            onClick={() => {
-              navigate({
-                to: '/diaries/$id',
-                params: { id: diaryData.id },
-                search: { fromCreate: fromCreate ? 1 : undefined },
-                replace: true,
-              });
-            }} 
-            icon={{ component: <ConversionIcon width={18} height={18} />, position: 'right' }}
+        {!isLoading && parallelDiary && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 20 }}
+            transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1], delay: 0.2 }}
             className="w-full sm:w-auto"
           >
-            원본일기 보기
-          </Button>
-        </motion.div>
+            <Button 
+              variant="primary" 
+              onClick={() => {
+                navigate({
+                  to: '/diaries/$id',
+                  params: { id: parallelDiary.diaryId },
+                  search: { fromCreate: fromCreate ? 1 : undefined },
+                  replace: true,
+                });
+              }} 
+              icon={{ component: <ConversionIcon width={18} height={18} />, position: 'right' }}
+              className="w-full sm:w-auto"
+            >
+              원본일기 보기
+            </Button>
+          </motion.div>
+        )}
           </div>
         </div>
     </div>

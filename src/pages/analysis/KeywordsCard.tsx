@@ -1,18 +1,40 @@
 import { motion } from 'framer-motion';
+import { useState, useEffect } from 'react';
 import Tag from '@/components/Tag';
-
-const keywords = [
-  { text: '카페', count: 12 },
-  { text: '산책', count: 8 },
-  { text: '독서', count: 7 },
-  { text: '운동', count: 6 },
-  { text: '친구', count: 5 },
-  { text: '영화', count: 4 },
-  { text: '요리', count: 3 },
-  { text: '음악', count: 3 },
-];
+import LoadingSpinner from '@/components/LoadingSpinner';
+import { getTopKeywords } from '@/services/diaryService';
 
 export default function KeywordsCard() {
+  const [keywords, setKeywords] = useState<Array<{ text: string; count: number }>>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  // API로부터 키워드 가져오기
+  useEffect(() => {
+    const fetchKeywords = async () => {
+      try {
+        setIsLoading(true);
+        setError(null);
+        const data = await getTopKeywords();
+        
+        // API 응답을 UI 형식으로 변환
+        const formattedKeywords = data.map(item => ({
+          text: item.keyword,
+          count: item.count,
+        }));
+        
+        setKeywords(formattedKeywords);
+      } catch (err) {
+        console.error('키워드 조회 실패:', err);
+        setError('키워드를 불러오는데 실패했습니다.');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    
+    fetchKeywords();
+  }, []);
+
   return (
     <motion.div
       className="bg-white rounded-[24px] shadow-[0px_1px_10px_0px_rgba(0,0,0,0.08)] p-6 lg:p-8"
@@ -24,17 +46,34 @@ export default function KeywordsCard() {
         자주 등장한 키워드
       </h2>
       
-      {/* 키워드 태그들 */}
-      <div className="flex flex-wrap gap-[8px]">
-        {keywords.map((keyword, index) => (
-          <Tag 
-            key={index} 
-            text={keyword.text} 
-            count={keyword.count}
-            variant={index < 4 ? 'primary' : 'secondary'}
-          />
-        ))}
-      </div>
+      {isLoading ? (
+        /* 로딩 상태 */
+        <div className="flex items-center justify-center py-8">
+          <LoadingSpinner size="sm" />
+        </div>
+      ) : error ? (
+        /* 에러 상태 */
+        <div className="flex items-center justify-center py-8">
+          <p className="text-sm text-red-500">{error}</p>
+        </div>
+      ) : keywords.length === 0 ? (
+        /* 빈 상태 */
+        <div className="flex items-center justify-center py-8">
+          <p className="text-sm text-gray-500">등록된 키워드가 없습니다.</p>
+        </div>
+      ) : (
+        /* 키워드 태그들 */
+        <div className="flex flex-wrap gap-[8px]">
+          {keywords.map((keyword, index) => (
+            <Tag 
+              key={index} 
+              text={keyword.text} 
+              count={keyword.count}
+              variant={index < 4 ? 'primary' : 'secondary'}
+            />
+          ))}
+        </div>
+      )}
     </motion.div>
   );
 }

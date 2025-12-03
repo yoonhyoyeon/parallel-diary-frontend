@@ -3,8 +3,14 @@ import GradientBackground from '@/components/GradientBackground';
 import { useSearch, useNavigate, useRouterState, Link } from '@tanstack/react-router';
 import Calendar from './diaries/components/Calendar';
 import ArrowLeftIcon from '@/assets/icons/arrow_left.svg?react';
+import PlusIcon from '@/assets/icons/plus.svg?react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Tag from '@/components/Tag';
+import Button from '@/components/Button';
+import GuidanceMessage from '@/components/GuidanceMessage';
+import DiaryCardSkeleton from '@/components/DiaryCardSkeleton';
+import { useState, useEffect } from 'react';
+import { getDiaries, getDiariesByDate, type Diary } from '@/services/diaryService';
 
 type TabType = 'all' | 'date';
 
@@ -24,6 +30,10 @@ export default function DiaryListPage() {
   const today = new Date();
   const activeTab: TabType = (search.tab as TabType) || 'date';
   
+  const [diaries, setDiaries] = useState<DiaryEntry[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  
   // 오늘 날짜를 YYYY-MM-DD 형식으로 변환
   const formatDateToString = (date: Date): string => {
     const year = date.getFullYear();
@@ -32,8 +42,50 @@ export default function DiaryListPage() {
     return `${year}-${month}-${day}`;
   };
   
+  // ISO 날짜를 한국어 형식으로 변환 (2025-11-23 -> 2025년 11월 23일)
+  const formatDateToKorean = (isoDate: string): string => {
+    const date = new Date(isoDate);
+    const year = date.getFullYear();
+    const month = date.getMonth() + 1;
+    const day = date.getDate();
+    return `${year}년 ${month}월 ${day}일`;
+  };
+  
   // 초기 상태는 오늘 날짜 (YYYY-MM-DD 형식)
   const selectedDate = search.date ? (search.date as string) : formatDateToString(today);
+
+  // API로부터 일기 목록 가져오기
+  useEffect(() => {
+    const fetchDiaries = async () => {
+      try {
+        setIsLoading(true);
+        setError(null);
+        
+        // 탭에 따라 다른 API 호출
+        const data = activeTab === 'date' 
+          ? await getDiariesByDate(selectedDate)
+          : await getDiaries();
+        
+        // API 응답을 DiaryEntry 형식으로 변환
+        const formattedDiaries: DiaryEntry[] = data.map((diary: Diary) => ({
+          id: diary.id,
+          date: formatDateToKorean(diary.writtenAt),
+          tags: diary.keywords,
+          content: diary.content,
+          isParallel: !!diary.parallelDiary, // parallelDiary가 있으면 true
+        }));
+        
+        setDiaries(formattedDiaries);
+      } catch (err) {
+        console.error('일기 목록 조회 실패:', err);
+        setError('일기 목록을 불러오는데 실패했습니다.');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    
+    fetchDiaries();
+  }, [activeTab, selectedDate]);
 
   const handleTabChange = (newTab: TabType) => {
     const newSearch: Record<string, unknown> = {
@@ -61,93 +113,9 @@ export default function DiaryListPage() {
     });
   };
 
-  // 샘플 데이터
-  const diaryEntries: DiaryEntry[] = [
-    {
-      id: '1',
-      date: '2025년 11월 7일',
-      tags: ['평행일기', '맑음', '평범함'],
-      content: '오늘은 아침에 일어나자마자 창문을 열었는데, 공기가 생각보다 차가워서 깜짝 놀랐다. 커피를 내리면서 오늘은 꼭 해야 할 일들을 머릿속으로 정리했다. 점심엔 오랜만에 밖에서 밥을 먹었는데, 혼자 먹는 밥이 이상하게 편안했다. 카페에 들러 앉아있다가 우연히 들은 음악이 마음에 들어서 바로 플레이리스트에 추가했다. 저녁쯤엔 갑자기 비가 내려서 버스를 타고 돌아왔는데, 창밖이 흐릿하게 번지는 게 예뻤다.',
-      isParallel: true,
-    },
-    {
-      id: '2',
-      date: '2025년 11월 7일',
-      tags: ['평행일기', '맑음', '평범함'],
-      content: '오늘은 아침에 일어나자마자 창문을 열었는데, 공기가 생각보다 차가워서 깜짝 놀랐다. 커피를 내리면서 오늘은 꼭 해야 할 일들을 머릿속으로 정리했다. 점심엔 오랜만에 밖에서 밥을 먹었는데, 혼자 먹는 밥이 이상하게 편안했다. 카페에 들러 앉아있다가 우연히 들은 음악이 마음에 들어서 바로 플레이리스트에 추가했다. 저녁쯤엔 갑자기 비가 내려서 버스를 타고 돌아왔는데, 창밖이 흐릿하게 번지는 게 예뻤다.',
-      isParallel: true,
-    },
-    {
-      id: '3',
-      date: '2025년 11월 7일',
-      tags: ['평행일기', '맑음', '평범함'],
-      content: '오늘은 아침에 일어나자마자 창문을 열었는데, 공기가 생각보다 차가워서 깜짝 놀랐다. 커피를 내리면서 오늘은 꼭 해야 할 일들을 머릿속으로 정리했다. 점심엔 오랜만에 밖에서 밥을 먹었는데, 혼자 먹는 밥이 이상하게 편안했다. 카페에 들러 앉아있다가 우연히 들은 음악이 마음에 들어서 바로 플레이리스트에 추가했다. 저녁쯤엔 갑자기 비가 내려서 버스를 타고 돌아왔는데, 창밖이 흐릿하게 번지는 게 예뻤다.',
-      isParallel: true,
-    },
-    {
-      id: '4',
-      date: '2025년 11월 7일',
-      tags: ['평행일기', '맑음', '평범함'],
-      content: '오늘은 아침에 일어나자마자 창문을 열었는데, 공기가 생각보다 차가워서 깜짝 놀랐다. 커피를 내리면서 오늘은 꼭 해야 할 일들을 머릿속으로 정리했다. 점심엔 오랜만에 밖에서 밥을 먹었는데, 혼자 먹는 밥이 이상하게 편안했다. 카페에 들러 앉아있다가 우연히 들은 음악이 마음에 들어서 바로 플레이리스트에 추가했다. 저녁쯤엔 갑자기 비가 내려서 버스를 타고 돌아왔는데, 창밖이 흐릿하게 번지는 게 예뻤다.',
-      isParallel: true,
-    },
-    {
-      id: '5',
-      date: '2025년 11월 7일',
-      tags: ['맑음', '평범함'],
-      content: '오늘은 아침에 일어나자마자 창문을 열었는데, 공기가 생각보다 차가워서 깜짝 놀랐다. 커피를 내리면서 오늘은 꼭 해야 할 일들을 머릿속으로 정리했다. 점심엔 오랜만에 밖에서 밥을 먹었는데, 혼자 먹는 밥이 이상하게 편안했다. 카페에 들러 앉아있다가 우연히 들은 음악이 마음에 들어서 바로 플레이리스트에 추가했다. 저녁쯤엔 갑자기 비가 내려서 버스를 타고 돌아왔는데, 창밖이 흐릿하게 번지는 게 예뻤다.',
-    },
-    {
-      id: '6',
-      date: '2025년 11월 7일',
-      tags: ['맑음', '평범함'],
-      content: '오늘은 아침에 일어나자마자 창문을 열었는데, 공기가 생각보다 차가워서 깜짝 놀랐다. 커피를 내리면서 오늘은 꼭 해야 할 일들을 머릿속으로 정리했다. 점심엔 오랜만에 밖에서 밥을 먹었는데, 혼자 먹는 밥이 이상하게 편안했다. 카페에 들러 앉아있다가 우연히 들은 음악이 마음에 들어서 바로 플레이리스트에 추가했다. 저녁쯤엔 갑자기 비가 내려서 버스를 타고 돌아왔는데, 창밖이 흐릿하게 번지는 게 예뻤다.',
-    },
-    {
-      id: '7',
-      date: '2025년 11월 7일',
-      tags: ['평행일기', '맑음', '평범함'],
-      content: '오늘은 아침에 일어나자마자 창문을 열었는데, 공기가 생각보다 차가워서 깜짝 놀랐다. 커피를 내리면서 오늘은 꼭 해야 할 일들을 머릿속으로 정리했다. 점심엔 오랜만에 밖에서 밥을 먹었는데, 혼자 먹는 밥이 이상하게 편안했다. 카페에 들러 앉아있다가 우연히 들은 음악이 마음에 들어서 바로 플레이리스트에 추가했다. 저녁쯤엔 갑자기 비가 내려서 버스를 타고 돌아왔는데, 창밖이 흐릿하게 번지는 게 예뻤다.',
-      isParallel: true,
-    },
-    {
-      id: '8',
-      date: '2025년 11월 7일',
-      tags: ['평행일기', '맑음', '평범함'],
-      content: '오늘은 아침에 일어나자마자 창문을 열었는데, 공기가 생각보다 차가워서 깜짝 놀랐다. 커피를 내리면서 오늘은 꼭 해야 할 일들을 머릿속으로 정리했다. 점심엔 오랜만에 밖에서 밥을 먹었는데, 혼자 먹는 밥이 이상하게 편안했다. 카페에 들러 앉아있다가 우연히 들은 음악이 마음에 들어서 바로 플레이리스트에 추가했다. 저녁쯤엔 갑자기 비가 내려서 버스를 타고 돌아왔는데, 창밖이 흐릿하게 번지는 게 예뻤다.',
-      isParallel: true,
-    },
-    {
-      id: '9',
-      date: '2025년 11월 7일',
-      tags: ['평행일기', '맑음', '평범함'],
-      content: '오늘은 아침에 일어나자마자 창문을 열었는데, 공기가 생각보다 차가워서 깜짝 놀랐다. 커피를 내리면서 오늘은 꼭 해야 할 일들을 머릿속으로 정리했다. 점심엔 오랜만에 밖에서 밥을 먹었는데, 혼자 먹는 밥이 이상하게 편안했다. 카페에 들러 앉아있다가 우연히 들은 음악이 마음에 들어서 바로 플레이리스트에 추가했다. 저녁쯤엔 갑자기 비가 내려서 버스를 타고 돌아왔는데, 창밖이 흐릿하게 번지는 게 예뻤다.',
-      isParallel: true,
-    },
-    {
-      id: '10',
-      date: '2025년 11월 7일',
-      tags: ['평행일기', '맑음', '평범함'],
-      content: '오늘은 아침에 일어나자마자 창문을 열었는데, 공기가 생각보다 차가워서 깜짝 놀랐다. 커피를 내리면서 오늘은 꼭 해야 할 일들을 머릿속으로 정리했다. 점심엔 오랜만에 밖에서 밥을 먹었는데, 혼자 먹는 밥이 이상하게 편안했다. 카페에 들러 앉아있다가 우연히 들은 음악이 마음에 들어서 바로 플레이리스트에 추가했다. 저녁쯤엔 갑자기 비가 내려서 버스를 타고 돌아왔는데, 창밖이 흐릿하게 번지는 게 예뻤다.',
-      isParallel: true,
-    },
-    {
-      id: '11',
-      date: '2025년 11월 7일',
-      tags: ['맑음', '평범함'],
-      content: '오늘은 아침에 일어나자마자 창문을 열었는데, 공기가 생각보다 차가워서 깜짝 놀랐다. 커피를 내리면서 오늘은 꼭 해야 할 일들을 머릿속으로 정리했다. 점심엔 오랜만에 밖에서 밥을 먹었는데, 혼자 먹는 밥이 이상하게 편안했다. 카페에 들러 앉아있다가 우연히 들은 음악이 마음에 들어서 바로 플레이리스트에 추가했다. 저녁쯤엔 갑자기 비가 내려서 버스를 타고 돌아왔는데, 창밖이 흐릿하게 번지는 게 예뻤다.',
-    },
-    {
-      id: '12',
-      date: '2025년 11월 7일',
-      tags: ['맑음', '평범함'],
-      content: '오늘은 아침에 일어나자마자 창문을 열었는데, 공기가 생각보다 차가워서 깜짝 놀랐다. 커피를 내리면서 오늘은 꼭 해야 할 일들을 머릿속으로 정리했다. 점심엔 오랜만에 밖에서 밥을 먹었는데, 혼자 먹는 밥이 이상하게 편안했다. 카페에 들러 앉아있다가 우연히 들은 음악이 마음에 들어서 바로 플레이리스트에 추가했다. 저녁쯤엔 갑자기 비가 내려서 버스를 타고 돌아왔는데, 창밖이 흐릿하게 번지는 게 예뻤다.',
-    },
-  ];
-
   // 일기가 있는 날짜들을 Set으로 변환 (YYYY-MM-DD 형식)
   const diaryDates = new Set<string>();
-  diaryEntries.forEach((entry) => {
+  diaries.forEach((entry) => {
     // "2025년 11월 7일" 형식을 "2025-11-07" 형식으로 변환
     const dateMatch = entry.date.match(/(\d{4})년 (\d{1,2})월 (\d{1,2})일/);
     if (dateMatch) {
@@ -181,8 +149,12 @@ export default function DiaryListPage() {
       {/* 탭 */}
       <div className="mb-8 md:mb-10 lg:mb-[40px]">
         <div className="flex text-base md:text-lg lg:text-[20px]">
-          <div className={`${activeTab === 'all' ? 'border-[#745ede] text-[#745ede]' : 'text-[#878787] border-[#D9D4FF]'} border-b-2 flex items-center justify-center flex-1 md:w-[180px] lg:w-[200px] h-12 md:h-14 lg:h-[60px] font-semibold cursor-pointer`} onClick={() => handleTabChange('all')}>전체</div>
-          <div className={`${activeTab === 'date' ? 'border-[#745ede] text-[#745ede]' : 'text-[#878787] border-[#D9D4FF]'} border-b-2 flex items-center justify-center flex-1 md:w-[180px] lg:w-[200px] h-12 md:h-14 lg:h-[60px] font-semibold cursor-pointer`} onClick={() => handleTabChange('date')}>날짜별</div>
+          <div className={`${activeTab === 'all' ? 'border-[#745ede] text-[#745ede]' : 'text-[#878787] border-[#D9D4FF]'} border-b-2 flex items-center justify-center gap-2 flex-1 md:w-[180px] lg:w-[200px] h-12 md:h-14 lg:h-[60px] font-semibold cursor-pointer`} onClick={() => handleTabChange('all')}>
+            전체
+          </div>
+          <div className={`${activeTab === 'date' ? 'border-[#745ede] text-[#745ede]' : 'text-[#878787] border-[#D9D4FF]'} border-b-2 flex items-center justify-center gap-2 flex-1 md:w-[180px] lg:w-[200px] h-12 md:h-14 lg:h-[60px] font-semibold cursor-pointer`} onClick={() => handleTabChange('date')}>
+            날짜별
+          </div>
         </div>
       </div>
 
@@ -222,29 +194,69 @@ export default function DiaryListPage() {
         className="mb-4 md:mb-5 lg:mb-[20px]"
       >
         <span className="text-base md:text-[18px]">
-          <span className="font-bold text-[#745ede]">7개</span>
+          <span className="font-bold text-[#745ede]">{diaries.length}개</span>
           <span className="font-medium text-[#595959]">의 일기</span>
         </span>
       </motion.div>
 
-      {/* 일기 카드 그리드 */}
-      <motion.div
-        key={`diary-list-${activeTab}`}
-        initial="hidden"
-        animate="visible"
-        variants={{
-          hidden: { opacity: 0 },
-          visible: {
-            opacity: 1,
-            transition: {
-              staggerChildren: 0.12,
-              delayChildren: activeTab === 'date' ? 0.25 : 0.15,
+      {/* 로딩 상태 */}
+      {isLoading ? (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-5 lg:gap-[20px]">
+          {[...Array(6)].map((_, index) => (
+            <DiaryCardSkeleton key={index} />
+          ))}
+        </div>
+      ) : error ? (
+        /* 에러 상태 */
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          className="flex items-center justify-center min-h-[400px]"
+        >
+          <p className="text-[12px] md:text-xl text-red-500">{error}</p>
+        </motion.div>
+      ) : diaries.length === 0 ? (
+        /* 일기 없는 상태 */
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6 }}
+          className="flex flex-col items-center justify-center gap-6 mt-10"
+        >
+          <div className="text-center">
+            <GuidanceMessage>
+              아직 작성된 일기가 없어요
+            </GuidanceMessage>
+            <p className="text-sm md:text-base text-gray-500 my-6">
+              첫 번째 일기를 작성하고<br/>
+              평행 세계의 당신을 만나보세요!
+            </p>
+          </div>
+          <Link to="/create">
+            <Button variant="primary" icon={{ component: <PlusIcon width={16} height={16} />, position: 'left' }}>
+              일기 작성하기
+            </Button>
+          </Link>
+        </motion.div>
+      ) : (
+        /* 일기 카드 그리드 */
+        <motion.div
+          key={`diary-list-${activeTab}`}
+          initial="hidden"
+          animate="visible"
+          variants={{
+            hidden: { opacity: 0 },
+            visible: {
+              opacity: 1,
+              transition: {
+                staggerChildren: 0.12,
+                delayChildren: activeTab === 'date' ? 0.25 : 0.15,
+              }
             }
-          }
-        }}
-        className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-5 lg:gap-[20px]"
-      >
-        {diaryEntries.map((entry) => (
+          }}
+          className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-5 lg:gap-[20px]"
+        >
+          {diaries.map((entry) => (
           <motion.div
             key={entry.id}
             variants={{
@@ -270,7 +282,8 @@ export default function DiaryListPage() {
             </Link>
           </motion.div>
         ))}
-      </motion.div>
+        </motion.div>
+      )}
       </div>
     </div>
   );

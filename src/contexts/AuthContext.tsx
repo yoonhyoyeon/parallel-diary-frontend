@@ -40,8 +40,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
         const storedToken = window.localStorage.getItem('accessToken');
 
         if (storedToken) {
-          // 토큰으로 프로필 조회하여 유효성 검증
-          const profile = await getProfile(storedToken);
+          // 토큰으로 프로필 조회하여 유효성 검증 (apiClient가 localStorage에서 자동으로 토큰 읽음)
+          const profile = await getProfile();
           setAccessToken(storedToken);
           setUser(profile);
           // localStorage의 user 정보도 최신화
@@ -78,7 +78,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     if (!accessToken) return;
 
     try {
-      const profile = await getProfile(accessToken);
+      const profile = await getProfile();
       setUser(profile);
       window.localStorage.setItem('user', JSON.stringify(profile));
     } catch (error) {

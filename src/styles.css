@@ -82,3 +82,44 @@ code {
     background-position: 0% 50%;
   }
 }
+
+/* ContributionCalendar: hide horizontal scrollbar by default, show on hover */
+.contrib-scrollbar {
+  position: relative; /* ensure :hover works reliably */
+  -ms-overflow-style: auto; /* IE/Edge: keep behavior, we'll hide visually */
+  scrollbar-gutter: stable; /* reserve scrollbar space to avoid layout shift */
+  scrollbar-width: thin; /* Firefox: reserve thin gutter */
+  scrollbar-color: transparent transparent; /* hide in Firefox by making thumb/track transparent */
+}
+
+/* Keep a fixed (but transparent) height for WebKit scrollbars so the box doesn't jump. */
+.contrib-scrollbar::-webkit-scrollbar {
+  height: 8px;
+}
+.contrib-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+  border-radius: 9999px;
+}
+.contrib-scrollbar::-webkit-scrollbar-thumb {
+  background: transparent;
+  border-radius: 9999px;
+  border: 2px solid transparent;
+}
+
+/* On hover, reveal a thin, styled scrollbar (no layout shift because gutter reserved) */
+.contrib-scrollbar:hover {
+  /* Let the browser use its default scrollbar colors on hover */
+  scrollbar-color: auto; /* Firefox: use default */
+}
+.contrib-scrollbar:hover::-webkit-scrollbar-track {
+  background: initial;
+}
+.contrib-scrollbar:hover::-webkit-scrollbar-thumb {
+  background: initial;
+  border: initial;
+  transition: background 150ms ease, transform 150ms ease;
+}
+.contrib-scrollbar:hover::-webkit-scrollbar-thumb:hover {
+  background: initial;
+  transform: scaleY(1.05);
+}

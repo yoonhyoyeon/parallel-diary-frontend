@@ -14,11 +14,11 @@ export default function AnalysisPage() {
   const navigate = useNavigate();
 
   return (
-    <main className="flex justify-center min-h-screen bg-white relative overflow-hidden px-4">
+    <main className="flex justify-center min-h-screen bg-white relative px-4">
       <ParticleBackground />
       <GradientBackground />
 
-      <div className="relative z-10 sm:px-8 lg:px-16 xl:px-24 py-8 lg:py-20 max-w-[1400px] overflow-scroll">
+      <div className="relative z-10 sm:px-8 lg:px-16 xl:px-24 py-8 lg:py-20 max-w-[1400px]">
         {/* 제목 */}
         <motion.div
           className="flex items-center gap-4 mb-8 lg:mb-15"

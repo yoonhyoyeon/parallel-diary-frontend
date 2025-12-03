@@ -93,7 +93,7 @@ export default function ContributionCalendar({ data }: ContributionCalendarProps
   }, [weeks]);
 
   return (
-    <div className="overflow-x-auto overflow-y-visible padding-1 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:'none'] [scrollbar-width:'none']">
+    <div className="overflow-x-auto overflow-y-visible p-1 contrib-scrollbar">
       {/* 월 라벨 */}
       <div className="relative h-4 mb-2 pl-6">
         {monthLabels.map((label) => (

@@ -18,7 +18,7 @@ export default function AnalysisPage() {
       <ParticleBackground />
       <GradientBackground />
 
-      <div className="relative z-10 sm:px-8 lg:px-16 xl:px-24 py-8 lg:py-20 max-w-[1400px]">
+      <div className="w-full relative z-10 sm:px-8 lg:px-16 xl:px-24 py-8 lg:py-20 max-w-[1400px]">
         {/* 제목 */}
         <motion.div
           className="flex items-center gap-4 mb-8 lg:mb-15"
@@ -38,16 +38,16 @@ export default function AnalysisPage() {
         </motion.div>
 
         {/* 레이아웃 그리드 */}
-        <div className="grid grid-cols-1 lg:grid-cols-[1fr_1fr] gap-6">
+        <div className="w-full grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_minmax(0,2fr)] gap-6">
           {/* 왼쪽 컬럼 */}
-          <div className="flex flex-col gap-6">
+          <div className="flex flex-col gap-6 min-w-0">
             <MonotonyScoreCard />
             <DailyTypeCard />
             <KeywordsCard />
           </div>
 
           {/* 오른쪽 컬럼 */}
-          <div className="flex flex-col gap-6">
+          <div className="flex flex-col gap-6 min-w-0">
             <MonotonyTrendCard />
             <DiaryStatusCard />
             <ScenarioRecommendCard />

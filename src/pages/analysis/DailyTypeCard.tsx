@@ -36,23 +36,22 @@ export default function DailyTypeCard() {
 
   return (
     <motion.div
-      className="bg-white rounded-[24px] shadow-[0px_1px_10px_0px_rgba(0,0,0,0.08)] p-6 lg:p-8"
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.6, delay: 0.4 }}
     >
-      <h2 className="text-lg lg:text-[20px] font-bold text-[#2b2b2b] mb-6">
+      <h2 className="text-lg lg:text-[20px] font-bold text-[#2b2b2b] mb-4 lg:mb-6">
         나의 일상 타입
       </h2>
       
       {isLoading ? (
         /* 로딩 상태 */
-        <div className="flex items-center justify-center py-12 lg:py-16">
+        <div className="bg-white rounded-[24px] shadow-[0px_1px_10px_0px_rgba(0,0,0,0.08)] flex items-center justify-center py-12 lg:py-16">
           <LoadingSpinner size="sm" />
         </div>
       ) : error ? (
         /* 에러 상태 */
-        <div className="flex items-center justify-center py-12 lg:py-16">
+        <div className="bg-white rounded-[24px] shadow-[0px_1px_10px_0px_rgba(0,0,0,0.08)] flex items-center justify-center py-12 lg:py-16">
           <p className="text-sm text-red-500">{error}</p>
         </div>
       ) : dailyType ? (

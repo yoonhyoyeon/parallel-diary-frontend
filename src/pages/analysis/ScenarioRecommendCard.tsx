@@ -4,7 +4,7 @@ import ArrowLeftIcon from '@/assets/icons/arrow_left.svg?react';
 import ArrowRightIcon from '@/assets/icons/arrow_right.svg?react';
 import ScenarioCard from '@/components/ScenarioCard';
 import LoadingSpinner from '@/components/LoadingSpinner';
-import { getRecommendedActivities, type RecommendedActivity } from '@/services/diaryService';
+import { getRecommendedActivities } from '@/services/diaryService';
 
 export interface Scenario {
   id: string;

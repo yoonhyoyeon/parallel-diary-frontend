@@ -5,7 +5,6 @@ import Button from '@/components/Button';
 import ConversionIcon from '@/assets/icons/conversion.svg?react';
 import ArrowLeftIcon from '@/assets/icons/arrow_left.svg?react';
 import ScenarioCard from '@/components/ScenarioCard';
-import DiaryDetailSkeleton from '@/components/DiaryDetailSkeleton';
 import { getParallelDiary, type ParallelDiaryDetail } from '@/services/diaryService';
 
 export default function ParallelDetailPage() {

@@ -8,6 +8,8 @@ import authLogoDesktop from '@/assets/images/auth_logo_desktop.png';
 import { loginUser } from '@/services/authService';
 import { ApiError } from '@/services/apiClient';
 import { useAuth } from '@/contexts/AuthContext';
+import GoogleIcon from '@/assets/icons/google_logo.png';
+import KakaoIcon from '@/assets/icons/kakao_logo.png';
 
 export default function LoginPage() {
   const navigate = useNavigate();
@@ -176,7 +178,7 @@ export default function LoginPage() {
           icon={{
             component: (
               <img 
-                src="/figma-assets/2e0625474d8cf189ba7ae94e1817240f8f0e5c90.png" 
+                src={GoogleIcon}
                 alt=""
                 className="w-6 h-6"
               />
@@ -193,7 +195,7 @@ export default function LoginPage() {
           icon={{
             component: (
               <img 
-                src="/figma-assets/409cfb033f6ddd1a1f86f3c1d440595a02a85954.png" 
+                src={KakaoIcon}
                 alt=""
                 className="w-8 h-8"
               />

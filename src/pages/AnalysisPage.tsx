@@ -7,8 +7,8 @@ import MonotonyScoreCard from './analysis/MonotonyScoreCard';
 import MonotonyTrendCard from './analysis/MonotonyTrendCard';
 import KeywordsCard from './analysis/KeywordsCard';
 import DiaryStatusCard from './analysis/DiaryStatusCard';
-import BehaviorPatternCard from './analysis/BehaviorPatternCard';
 import ScenarioRecommendCard from './analysis/ScenarioRecommendCard';
+import DailyTypeCard from './analysis/DailyTypeCard';
 
 export default function AnalysisPage() {
   const navigate = useNavigate();
@@ -38,18 +38,18 @@ export default function AnalysisPage() {
         </motion.div>
 
         {/* 레이아웃 그리드 */}
-        <div className="grid grid-cols-1 lg:grid-cols-[minmax(300px,400px)_1fr] gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-[1fr_1fr] gap-6">
           {/* 왼쪽 컬럼 */}
           <div className="flex flex-col gap-6">
             <MonotonyScoreCard />
-            <MonotonyTrendCard />
+            <DailyTypeCard />
             <KeywordsCard />
           </div>
 
           {/* 오른쪽 컬럼 */}
           <div className="flex flex-col gap-6">
+            <MonotonyTrendCard />
             <DiaryStatusCard />
-            <BehaviorPatternCard />
             <ScenarioRecommendCard />
           </div>
         </div>

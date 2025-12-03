@@ -1,27 +1,20 @@
 import { motion } from 'framer-motion';
 
 export default function MonotonyScoreCard() {
-  const score = 80;
+  const monotonyScore = 80; // API에서 받은 단조로움 지수
+  const score = 100 - monotonyScore; // 다채로움 지수로 변환
   
-  // 점수에 따른 상태 결정 (낮을수록 좋음)
+  // 점수에 따른 상태 결정 (높을수록 좋음)
   const getScoreStatus = (score: number) => {
     if (score >= 70) {
       return {
-        message: '일상에 큰 변화가 필요해요!',
-        messageColor: '#EAE8FF',
-        scoreColor: '#EAE8FF',
-        gradientOpacity: 0.10,
-        emoji: '🚨'
+        message: '다채로운 일상을 보내고 있어요!',
+        messageColor: '#9E89FF',
+        scoreColor: '#9E89FF',
+        gradientOpacity: 0.40,
+        emoji: '✨'
       };
     } else if (score >= 50) {
-      return {
-        message: '일상에 변화가 필요해요',
-        messageColor: '#D9D4FF',
-        scoreColor: '#D9D4FF',
-        gradientOpacity: 0.20,
-        emoji: '⚠️'
-      };
-    } else if (score >= 30) {
       return {
         message: '적당한 일상을 보내고 있어요',
         messageColor: '#BDB3FF',
@@ -29,13 +22,21 @@ export default function MonotonyScoreCard() {
         gradientOpacity: 0.30,
         emoji: '😊'
       };
+    } else if (score >= 30) {
+      return {
+        message: '일상에 변화가 필요해요',
+        messageColor: '#D9D4FF',
+        scoreColor: '#D9D4FF',
+        gradientOpacity: 0.20,
+        emoji: '⚠️'
+      };
     } else {
       return {
-        message: '다채로운 일상을 보내고 있어요!',
-        messageColor: '#9E89FF',
-        scoreColor: '#9E89FF',
-        gradientOpacity: 0.40,
-        emoji: '✨'
+        message: '일상에 큰 변화가 필요해요!',
+        messageColor: '#EAE8FF',
+        scoreColor: '#EAE8FF',
+        gradientOpacity: 0.10,
+        emoji: '🚨'
       };
     }
   };
@@ -58,7 +59,7 @@ export default function MonotonyScoreCard() {
       {/* 컨텐츠 */}
       <div className="relative px-6 lg:px-8 py-6 lg:py-7 flex flex-col h-full">
         <h3 className="text-xl lg:text-[24px] font-bold text-white mb-2 leading-none">
-          현재 단조로움 지수
+          현재 다채로움 지수
         </h3>
         <p 
           className="text-sm lg:text-[16px] mb-auto leading-none font-medium"

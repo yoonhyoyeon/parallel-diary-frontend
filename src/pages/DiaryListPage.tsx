@@ -7,7 +7,6 @@ import PlusIcon from '@/assets/icons/plus.svg?react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Tag from '@/components/Tag';
 import Button from '@/components/Button';
-import GuidanceMessage from '@/components/GuidanceMessage';
 import DiaryCardSkeleton from '@/components/DiaryCardSkeleton';
 import { useState, useEffect } from 'react';
 import { getDiaries, getDiariesByDate, type Diary } from '@/services/diaryService';

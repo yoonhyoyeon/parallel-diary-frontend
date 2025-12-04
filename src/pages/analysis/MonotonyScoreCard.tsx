@@ -97,7 +97,7 @@ export default function MonotonyScoreCard() {
                 일기를 작성해주세요
               </h4>
               <p className="text-sm lg:text-[14px] text-[#9ca3af]">
-                일기를 작성하면 지수가 표시돼요
+                일기를 작성하면 다채로움 지수가 표시돼요
               </p>
             </div>
             <Button 

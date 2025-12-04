@@ -1,6 +1,7 @@
-import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useState, useEffect } from 'react';
+import ArrowLeftIcon from '@/assets/icons/arrow_left.svg?react';
+import ArrowRightIcon from '@/assets/icons/arrow_right.svg?react';
 
 interface CalendarProps {
   selectedDate: string | undefined; // 선택된 날짜 (YYYY-MM-DD 형식)
@@ -115,7 +116,7 @@ export default function Calendar({ selectedDate, onDateChange, diaryDates = new 
           onClick={goToPreviousWeek}
           className="p-2 hover:bg-gray-100 rounded-full transition-colors"
         >
-          <ChevronLeft className="h-5 w-5 text-gray-600" />
+          <ArrowLeftIcon width={20} height={20} className="text-gray-600" />
         </button>
         
         <div className="text-center">
@@ -128,7 +129,7 @@ export default function Calendar({ selectedDate, onDateChange, diaryDates = new 
           onClick={goToNextWeek}
           className="p-2 hover:bg-gray-100 rounded-full transition-colors"
         >
-          <ChevronRight className="h-5 w-5 text-gray-600" />
+          <ArrowRightIcon width={20} height={20} className="text-gray-600" />
         </button>
       </div>
 

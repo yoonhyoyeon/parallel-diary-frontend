@@ -85,7 +85,13 @@ export default function DailyTypeCard() {
           <div className="relative px-6 py-10 lg:px-8 lg:py-12 flex flex-col items-center gap-4 lg:gap-5 text-center">
             {/* 아이콘 */}
             <div className="flex items-center justify-center w-[100px] h-[100px] lg:w-[120px] lg:h-[120px]">
-              <span className="text-6xl lg:text-7xl">🤔</span>
+              <span className="text-6xl lg:text-7xl">
+                {error === '일기가 없습니다. 일기를 작성해주세요.'
+                  ? '✍️'
+                  : error === 'classification-failed'
+                  ? '🤔'
+                  : '⚠️'}
+              </span>
             </div>
             
             {/* 메시지 */}

@@ -41,12 +41,12 @@ export default function ScenarioRecommendCard() {
         const data = await getRecommendedActivities();
         
         // API 응답을 Scenario 형식으로 변환
-        const formattedScenarios: Scenario[] = data.map((activity, index) => ({
+        const formattedScenarios: Scenario[] = data.map((activity) => ({
           id: activity.id,
           emoji: activity.emoji,
           title: activity.title,
           description: activity.content,
-          score: 30 + (index * 10), // 30부터 시작해서 10씩 증가 (임시)
+          score: 0, // ScenarioCard 내부에서 ID 기반으로 생성
         }));
         
         setScenarios(formattedScenarios);
@@ -166,10 +166,10 @@ export default function ScenarioRecommendCard() {
               {visibleScenarios.map((scenario) => (
                 <ScenarioCard
                   key={scenario.id}
+                  id={scenario.id}
                   emoji={scenario.emoji}
                   title={scenario.title}
                   description={scenario.description}
-                  score={scenario.score}
                 />
               ))}
             </motion.div>

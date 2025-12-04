@@ -1,7 +1,8 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { useNavigate } from '@tanstack/react-router';
 import { createIntegratedDiary } from '@/services/diaryService';
+import Button from '@/components/Button';
 
 interface LoadingStepProps {
   diaryContent: string;
@@ -11,61 +12,95 @@ interface LoadingStepProps {
 export default function LoadingStep({ diaryContent, onComplete }: LoadingStepProps) {
   const navigate = useNavigate();
   const [error, setError] = useState<string | null>(null);
+  const hasCalledRef = useRef(false);
+
+  const createDiary = async () => {
+    if (hasCalledRef.current) return; // 이미 호출했으면 무시
+    hasCalledRef.current = true;
+    
+    try {
+      // 현재 날짜를 ISO 8601 형식으로 변환
+      const now = new Date();
+      const writtenAt = now.toISOString();
+      
+      console.log('일기 생성 요청:', { originalContent: diaryContent.substring(0, 50), writtenAt });
+      
+      // 일기와 평행일기를 한 번에 생성
+      const diary = await createIntegratedDiary(diaryContent, writtenAt);
+      
+      console.log('일기 생성 성공:', diary);
+      
+      // 평행일기 ID가 있으면 완료 처리
+      if (diary.parallelDiary?.id) {
+        const parallelDiaryId = diary.parallelDiary.id;
+        onComplete(parallelDiaryId);
+        
+        // 평행일기 보기 페이지로 리다이렉트 (fromCreate query string 포함)
+        navigate({
+          to: '/diaries/$id/parallel',
+          params: { id: parallelDiaryId },
+          search: { fromCreate: 1 },
+          replace: true,
+        });
+      } else {
+        setError('평행일기 생성에 실패했습니다.');
+      }
+    } catch (err) {
+      console.error('일기 저장 중 오류:', err);
+      setError('일기를 저장하는 중 오류가 발생했습니다.');
+    }
+  };
 
   useEffect(() => {
-    const createDiary = async () => {
-      try {
-        // 현재 날짜를 ISO 8601 형식으로 변환
-        const now = new Date();
-        const writtenAt = now.toISOString();
-        
-        // 일기와 평행일기를 한 번에 생성
-        const diary = await createIntegratedDiary(diaryContent, writtenAt);
-        
-        // 평행일기 ID가 있으면 완료 처리
-        if (diary.parallelDiary?.id) {
-          const parallelDiaryId = diary.parallelDiary.id;
-          onComplete(parallelDiaryId);
-          
-          // 평행일기 보기 페이지로 리다이렉트 (fromCreate query string 포함)
-          navigate({
-            to: '/diaries/$id/parallel',
-            params: { id: parallelDiaryId },
-            search: { fromCreate: 1 },
-            replace: true,
-          });
-        } else {
-          setError('평행일기 생성에 실패했습니다.');
-        }
-      } catch (err) {
-        console.error('일기 저장 중 오류:', err);
-        setError('일기를 저장하는 중 오류가 발생했습니다.');
-      }
-    };
-
     createDiary();
-  }, [diaryContent, onComplete, navigate]);
+  }, []);
 
   return (
     <div className="relative z-10 min-h-screen flex items-center justify-center text-center px-4 md:px-6 lg:px-5 py-6 md:py-8">
       {error ? (
         /* 에러 메시지 */
-        <div className="text-white">
-          <motion.h1
-            className="text-xl md:text-2xl font-bold mb-4"
+        <div className="text-white flex flex-col items-center gap-6">
+          <div className="text-center">
+            <motion.h1
+              className="text-xl md:text-2xl font-bold mb-4"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+            >
+              문제가 발생했습니다
+            </motion.h1>
+            <motion.p
+              className="text-sm md:text-base text-red-300"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.1 }}
+            >
+              {error}
+            </motion.p>
+          </div>
+          
+          <motion.div
+            className="flex flex-col sm:flex-row gap-3"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2 }}
           >
-            문제가 발생했습니다
-          </motion.h1>
-          <motion.p
-            className="text-sm md:text-base text-red-300"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.1 }}
-          >
-            {error}
-          </motion.p>
+            <Button
+              variant="primary"
+              onClick={() => {
+                setError(null);
+                hasCalledRef.current = false;
+                createDiary();
+              }}
+            >
+              다시 시도
+            </Button>
+            <Button
+              variant="secondary"
+              onClick={() => navigate({ to: '/' })}
+            >
+              홈으로 이동
+            </Button>
+          </motion.div>
         </div>
       ) : (
         /* 포탈 애니메이션 - 가운데 원 */

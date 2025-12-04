@@ -166,6 +166,30 @@ export async function createIntegratedDiary(
   );
 }
 
+export interface ClassifyDiaryTypeRequest {
+  sentences: string[];
+}
+
+export interface ClassifyDiaryTypeResponse {
+  diary_type: '새로운 시도형' | '흐름형 (적응형)' | '루틴 충실형' | '분류 불가';
+}
+
+/**
+ * 일기 문장들의 평균 유사도를 기반으로 일기 타입 분류
+ * @param sentences 일기 문장 배열
+ * @returns 분류된 일기 타입
+ */
+export async function classifyDiaryType(sentences: string[]): Promise<ClassifyDiaryTypeResponse> {
+  return apiClient<ClassifyDiaryTypeResponse>(
+    '/analysis/classify-Type',
+    {
+      method: 'POST',
+      body: JSON.stringify({ sentences }),
+    },
+    'ai'
+  );
+}
+
 export interface MonotonyIndex {
   id: string;
   date: string; // ISO 8601 format

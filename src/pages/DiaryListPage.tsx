@@ -224,11 +224,11 @@ export default function DiaryListPage() {
           className="flex flex-col items-center justify-center gap-6 mt-10"
         >
           <div className="text-center">
-            <GuidanceMessage>
-              아직 작성된 일기가 없어요
-            </GuidanceMessage>
-            <p className="text-sm md:text-base text-gray-500 my-6">
-              첫 번째 일기를 작성하고<br/>
+            <h1 className="text-[#595959] text-[20px] md:text-[24px] lg:text-[30px] font-bold mb-2">
+              작성된 일기가 없어요..
+            </h1>
+            <p className="text-sm md:text-base text-gray-500 my-4">
+              오늘의 일기를 작성하고<br/>
               평행 세계의 당신을 만나보세요!
             </p>
           </div>

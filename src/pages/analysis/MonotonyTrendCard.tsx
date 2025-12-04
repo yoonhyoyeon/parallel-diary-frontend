@@ -1,10 +1,12 @@
-import { motion } from 'framer-motion';
 import { useState, useEffect } from 'react';
+import { useNavigate } from '@tanstack/react-router';
 import { Area, AreaChart, CartesianGrid, ResponsiveContainer, XAxis, YAxis } from 'recharts';
 import { getMonotonyIndices } from '@/services/diaryService';
-import LoadingSpinner from '@/components/LoadingSpinner';
+import Button from '@/components/Button';
+import SkeletonCard from '@/components/SkeletonCard';
 
 export default function MonotonyTrendCard() {
+  const navigate = useNavigate();
   const [chartData, setChartData] = useState<Array<{ date: string; value: number }>>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -46,31 +48,38 @@ export default function MonotonyTrendCard() {
     fetchMonotonyData();
   }, []);
 
+  if (isLoading) {
+    return <SkeletonCard variant="chart" />;
+  }
+
   return (
-    <motion.div
-      className="bg-white rounded-[24px] shadow-[0px_1px_10px_0px_rgba(0,0,0,0.08)] p-6 lg:p-8 min-h-[300px] lg:h-[359px]"
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.6, delay: 0.3 }}
-    >
+    <div className="bg-white rounded-[24px] shadow-[0px_1px_10px_0px_rgba(0,0,0,0.08)] p-6 lg:p-8 min-h-[300px] lg:h-[359px]">
       <h2 className="text-lg lg:text-[20px] font-bold text-[#2b2b2b] mb-6">
         다채로움 지수 변화
       </h2>
       
-      {isLoading ? (
-        /* 로딩 상태 */
-        <div className="flex items-center justify-center h-[220px] lg:h-[260px]">
-          <LoadingSpinner size="sm" />
-        </div>
-      ) : error ? (
+      {error ? (
         /* 에러 상태 */
-        <div className="flex items-center justify-center h-[220px] lg:h-[260px]">
-          <p className="text-sm text-red-500">{error}</p>
+        <div className="flex flex-col items-center justify-center h-[220px] lg:h-[260px] text-center">
+          <p className="text-sm text-[#ef4444]">{error}</p>
         </div>
       ) : chartData.length === 0 ? (
         /* 데이터 없음 */
-        <div className="flex items-center justify-center h-[220px] lg:h-[260px]">
-          <p className="text-sm text-gray-500">아직 데이터가 없습니다.</p>
+        <div className="flex flex-col items-center justify-center text-center gap-4 pt-10">
+          <div>
+            <h3 className="text-base lg:text-[18px] font-bold text-[#2b2b2b] mb-2">
+              일기를 작성해주세요
+            </h3>
+            <p className="text-sm text-[#6b6b6b]">
+              일기를 작성하면 그래프가 표시돼요
+            </p>
+          </div>
+          <Button 
+            variant="primary" 
+            onClick={() => navigate({ to: '/create' })}
+          >
+            일기 작성하기
+          </Button>
         </div>
       ) : (
         /* 차트 */
@@ -114,7 +123,7 @@ export default function MonotonyTrendCard() {
           </ResponsiveContainer>
         </div>
       )}
-    </motion.div>
+    </div>
   );
 }
 

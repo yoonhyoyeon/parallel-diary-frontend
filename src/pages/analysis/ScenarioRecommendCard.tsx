@@ -3,8 +3,8 @@ import { useState, useEffect } from 'react';
 import ArrowLeftIcon from '@/assets/icons/arrow_left.svg?react';
 import ArrowRightIcon from '@/assets/icons/arrow_right.svg?react';
 import ScenarioCard from '@/components/ScenarioCard';
-import LoadingSpinner from '@/components/LoadingSpinner';
 import { getRecommendedActivities } from '@/services/diaryService';
+import SkeletonCard from '@/components/SkeletonCard';
 
 export interface Scenario {
   id: string;
@@ -77,13 +77,12 @@ export default function ScenarioRecommendCard() {
   const isLastPage = currentIndex + itemsPerPage >= scenarios.length;
   const visibleScenarios = scenarios.slice(currentIndex, currentIndex + itemsPerPage);
 
+  if (isLoading) {
+    return <SkeletonCard variant="default" />;
+  }
+
   return (
-    <motion.div
-      className="bg-white rounded-[24px] shadow-[0px_1px_10px_0px_rgba(0,0,0,0.08)] p-6 lg:p-8"
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.6, delay: 0.4 }}
-    >
+    <div className="bg-white rounded-[24px] shadow-[0px_1px_10px_0px_rgba(0,0,0,0.08)] p-6 lg:p-8">
       {/* 헤더 */}
       <div className="flex items-start justify-between mb-6">
         <div>
@@ -95,7 +94,7 @@ export default function ScenarioRecommendCard() {
           </p>
         </div>
         {/* 네비게이션 버튼 */}
-        {!isLoading && !error && scenarios.length > 0 && (
+        {!error && scenarios.length > 0 && (
           <div className="flex gap-2 shrink-0">
             <button
               onClick={handlePrev}
@@ -125,12 +124,7 @@ export default function ScenarioRecommendCard() {
 
       {/* 시나리오 카드들 */}
       <div className="relative overflow-hidden h-[180px]">
-        {isLoading ? (
-          /* 로딩 상태 */
-          <div className="flex items-center justify-center h-full">
-            <LoadingSpinner size="sm" />
-          </div>
-        ) : error ? (
+        {error ? (
           /* 에러 상태 */
           <div className="flex items-center justify-center h-full">
             <p className="text-sm text-red-500">{error}</p>
@@ -138,7 +132,7 @@ export default function ScenarioRecommendCard() {
         ) : scenarios.length === 0 ? (
           /* 빈 상태 */
           <div className="flex items-center justify-center h-full">
-            <p className="text-sm text-gray-500">추천 활동이 없습니다.</p>
+            <p className="text-sm text-gray-500">일기를 작성하면 활동을 추천해드려요</p>
           </div>
         ) : (
           /* 시나리오 슬라이드 */
@@ -182,7 +176,7 @@ export default function ScenarioRecommendCard() {
           </AnimatePresence>
         )}
       </div>
-    </motion.div>
+    </div>
   );
 }
 

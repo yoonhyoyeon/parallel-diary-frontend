@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useState } from 'react';
 import { Link, useNavigate } from '@tanstack/react-router';
 import { motion } from 'framer-motion';
 import type { FormEvent } from 'react';
@@ -15,24 +15,13 @@ export default function SignupPage() {
   const [password, setPassword] = useState('');
   const [passwordConfirm, setPasswordConfirm] = useState('');
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const redirectTimerRef = useRef<number | null>(null);
-
-  useEffect(() => {
-    return () => {
-      if (redirectTimerRef.current) {
-        window.clearTimeout(redirectTimerRef.current);
-      }
-    };
-  }, []);
 
   const handleSignup = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     if (isSubmitting) return;
 
     setErrorMessage(null);
-    setSuccessMessage(null);
 
     const trimmedEmail = email.trim();
     const trimmedName = name.trim();
@@ -55,10 +44,9 @@ export default function SignupPage() {
     try {
       setIsSubmitting(true);
       await registerUser({ email: trimmedEmail, name: trimmedName, password });
-      setSuccessMessage('회원가입이 완료되었습니다! 곧 로그인 페이지로 이동합니다.');
-      redirectTimerRef.current = window.setTimeout(() => {
-        navigate({ to: '/auth/login' });
-      }, 1500);
+      
+      // 회원가입 성공 시 즉시 로그인 페이지로 이동
+      navigate({ to: '/auth/login' });
     } catch (error) {
       if (error instanceof ApiError) {
         setErrorMessage(error.message);
@@ -175,15 +163,20 @@ export default function SignupPage() {
           </p>
         )}
 
-        {(errorMessage || successMessage) && (
+        {errorMessage && (
           <div className="-mt-2" aria-live="polite">
-            {errorMessage && <p className="text-sm text-[#ff8f8f]">{errorMessage}</p>}
-            {successMessage && <p className="text-sm text-[#8dd87a] mt-1">{successMessage}</p>}
+            <p className="text-sm text-[#ff8f8f]">{errorMessage}</p>
           </div>
         )}
 
         {/* 회원가입 버튼 */}
-        <Button variant="auth" type="submit" disabled={isSubmitDisabled} loading={isSubmitting}>
+        <Button 
+          variant="auth" 
+          type="submit" 
+          disabled={isSubmitDisabled} 
+          loading={isSubmitting}
+          loadingText="가입 중..."
+        >
           회원가입
         </Button>
       </form>

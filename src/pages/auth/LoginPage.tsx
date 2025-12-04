@@ -147,6 +147,7 @@ export default function LoginPage() {
           type="submit"
           disabled={!email.trim() || !password || isSubmitting}
           loading={isSubmitting}
+          loadingText="로그인 중..."
         >
           로그인
         </Button>

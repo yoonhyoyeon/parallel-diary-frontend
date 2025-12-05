@@ -9,6 +9,7 @@ interface ButtonProps {
   className?: string;
   type?: 'button' | 'submit' | 'reset';
   loading?: boolean;
+  loadingText?: string;
 }
 
 export default function Button({
@@ -20,6 +21,7 @@ export default function Button({
   className = '',
   type = 'button',
   loading = false,
+  loadingText = '처리중...',
 }: ButtonProps) {
   const baseStyles =
     'flex items-center justify-center gap-3 transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed';
@@ -43,7 +45,7 @@ export default function Button({
       className={`${className} ${baseStyles} ${variantStyles[variant]}`}
     >
       {icon && icon.position === 'left' && icon.component}
-      <span>{loading ? '처리중...' : children}</span>
+      <span>{loading ? loadingText : children}</span>
       {icon && icon.position === 'right' && icon.component}
     </button>
   );

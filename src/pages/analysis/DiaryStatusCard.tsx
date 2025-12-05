@@ -1,8 +1,7 @@
-import { motion } from 'framer-motion';
 import { useState, useEffect } from 'react';
 import ContributionCalendar from '@/components/ContributionCalendar';
-import LoadingSpinner from '@/components/LoadingSpinner';
 import { getDiaryActivity } from '@/services/diaryService';
+import SkeletonCard from '@/components/SkeletonCard';
 
 export default function DiaryStatusCard() {
   const [activityData, setActivityData] = useState<Array<{ date: string; hasEntry: boolean }>>([]);
@@ -52,26 +51,20 @@ export default function DiaryStatusCard() {
     fetchActivity();
   }, []);
 
+  if (isLoading) {
+    return <SkeletonCard variant="calendar" />;
+  }
+
   return (
-    <motion.div
-      className="bg-white rounded-[24px] shadow-[0px_1px_10px_0px_rgba(0,0,0,0.08)] p-6 lg:p-8"
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.6, delay: 0.1 }}
-    >
+    <div className="w-full min-w-0 overflow-hidden bg-white rounded-[24px] shadow-[0px_1px_10px_0px_rgba(0,0,0,0.08)] p-6 lg:p-8">
       <div className="mb-4">
         <h2 className="text-lg lg:text-[20px] font-bold text-[#2b2b2b] mb-1">일기 작성 현황</h2>
-        {!isLoading && !error && streak > 0 && (
+        {!error && streak > 0 && (
           <p className="text-sm lg:text-[14px] text-[#6b6b6b]">{streak}일 연속 작성 중이에요! 🔥</p>
         )}
       </div>
       
-      {isLoading ? (
-        /* 로딩 상태 */
-        <div className="flex items-center justify-center py-8">
-          <LoadingSpinner size="sm" />
-        </div>
-      ) : error ? (
+      {error ? (
         /* 에러 상태 */
         <div className="flex items-center justify-center py-8">
           <p className="text-sm text-red-500">{error}</p>
@@ -80,7 +73,7 @@ export default function DiaryStatusCard() {
         /* 캘린더 */
         <ContributionCalendar data={activityData} />
       )}
-    </motion.div>
+    </div>
   );
 }
 

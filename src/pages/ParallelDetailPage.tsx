@@ -184,13 +184,13 @@ export default function ParallelDetailPage() {
                 <div className="flex flex-col gap-3 md:gap-4 lg:gap-5 flex-1 min-h-0">
                   <p className="text-base md:text-[17px] lg:text-[18px] font-semibold text-white">색다른 일상 추천</p>
                   <div className="flex flex-col gap-3 flex-1 min-h-0 overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:'none'] [scrollbar-width:'none']">
-                    {parallelDiary.recommendedActivities.map((activity, index) => (
-                      <div key={index} className="shrink-0">
+                    {parallelDiary.recommendedActivities.map((activity) => (
+                      <div key={activity.id} className="shrink-0">
                         <ScenarioCard
+                          id={activity.id}
                           emoji={activity.emoji}
                           title={activity.title}
                           description={activity.content}
-                          score={50 + index * 5}
                         />
                       </div>
                     ))}

@@ -76,15 +76,18 @@ export default function ContributionCalendar({ data }: ContributionCalendarProps
     let lastMonth = -1;
     
     weeks.forEach((week, weekIndex) => {
-      const firstValidDay = week.find((day) => day !== null);
-      if (firstValidDay) {
-        const month = firstValidDay.date.getMonth();
-        if (month !== lastMonth) {
-          labels.push({
-            month: `${month + 1}월`,
-            weekIndex,
-          });
-          lastMonth = month;
+      // 주의 모든 날짜를 확인하여 월이 바뀌는 시점 찾기
+      for (const day of week) {
+        if (day !== null) {
+          const month = day.date.getMonth();
+          if (month !== lastMonth) {
+            labels.push({
+              month: `${month + 1}월`,
+              weekIndex,
+            });
+            lastMonth = month;
+            break; // 이 주에서 첫 번째 새로운 월만 표시
+          }
         }
       }
     });
@@ -93,13 +96,13 @@ export default function ContributionCalendar({ data }: ContributionCalendarProps
   }, [weeks]);
 
   return (
-    <div className="overflow-x-auto overflow-y-visible p-1 contrib-scrollbar">
+    <div className="w-full max-w-full overflow-x-auto overflow-y-visible p-1 contrib-scrollbar">
       {/* 월 라벨 */}
-      <div className="relative h-4 mb-2 pl-6">
+      <div className="relative h-4 mb-2 pl-6 min-w-max">
         {monthLabels.map((label) => (
           <div
             key={label.weekIndex}
-            className="absolute text-[10px] text-[#6b6b6b]"
+            className="absolute text-[10px] text-[#6b6b6b] whitespace-nowrap"
             style={{ left: `${24 + label.weekIndex * 16}px` }}
           >
             {label.month}
@@ -108,20 +111,20 @@ export default function ContributionCalendar({ data }: ContributionCalendarProps
       </div>
 
       {/* 잔디 그리드 - 365일 */}
-      <div className="flex gap-1 my-4">
+      <div className="flex gap-1 my-4 min-w-max">
         {/* 요일 라벨 */}
-        <div className="flex flex-col gap-1 justify-around text-[10px] text-[#6b6b6b] pr-2">
+        <div className="flex flex-col gap-1 justify-around text-[10px] text-[#6b6b6b] pr-2 whitespace-nowrap">
+          <div className="h-3 flex items-center">일</div>
           <div className="h-3 flex items-center">월</div>
           <div className="h-3 flex items-center">화</div>
           <div className="h-3 flex items-center">수</div>
           <div className="h-3 flex items-center">목</div>
           <div className="h-3 flex items-center">금</div>
           <div className="h-3 flex items-center">토</div>
-          <div className="h-3 flex items-center">일</div>
         </div>
 
         {/* 주별 그리드 */}
-        <div className="flex gap-1">
+        <div className="flex gap-1 min-w-max">
           {weeks.map((week, weekIndex) => (
             <div key={weekIndex} className="flex flex-col gap-1">
               {Array.from({ length: 7 }, (_, dayIndex) => {

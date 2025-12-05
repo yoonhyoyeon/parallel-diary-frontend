@@ -1,6 +1,6 @@
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { motion } from 'framer-motion';
-import { useState, useEffect } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 interface CalendarProps {
   selectedDate: string | undefined; // 선택된 날짜 (YYYY-MM-DD 형식)
@@ -33,6 +33,14 @@ export default function Calendar({ selectedDate, onDateChange, diaryDates = new 
       : getWeekStart(today);
   });
 
+  // 년월 입력 모드 상태 (개별적으로 관리)
+  const [isEditingYear, setIsEditingYear] = useState(false);
+  const [isEditingMonth, setIsEditingMonth] = useState(false);
+  const [yearInput, setYearInput] = useState('');
+  const [monthInput, setMonthInput] = useState('');
+  const yearInputRef = useRef<HTMLInputElement>(null);
+  const monthInputRef = useRef<HTMLInputElement>(null);
+
   // selectedDate가 변경되면 (사용자가 날짜를 선택하면) 해당 주로 이동
   useEffect(() => {
     if (selectedDate) {
@@ -42,8 +50,8 @@ export default function Calendar({ selectedDate, onDateChange, diaryDates = new 
     }
   }, [selectedDate]);
 
-  function getWeekDays(startDate: Date): Date[] {
-    const days: Date[] = [];
+  function getWeekDays(startDate: Date): Array<Date> {
+    const days: Array<Date> = [];
     for (let i = 0; i < 7; i++) {
       const day = new Date(startDate);
       day.setDate(startDate.getDate() + i);
@@ -52,8 +60,8 @@ export default function Calendar({ selectedDate, onDateChange, diaryDates = new 
     return days;
   }
 
-  // diaryDates Set을 Date[]로 변환
-  const diaryDatesArray: Date[] = Array.from(diaryDates).map(dateString => {
+  // diaryDates Set을 Array<Date>로 변환
+  const diaryDatesArray: Array<Date> = Array.from(diaryDates).map(dateString => {
     const [year, month, day] = dateString.split('-').map(Number);
     return new Date(year, month - 1, day);
   });
@@ -104,6 +112,91 @@ export default function Calendar({ selectedDate, onDateChange, diaryDates = new 
     setCurrentWeekStart(newWeekStart);
   };
 
+  const handleYearClick = () => {
+    setIsEditingYear(true);
+    setYearInput(currentYear.toString());
+    setTimeout(() => {
+      yearInputRef.current?.focus();
+      yearInputRef.current?.select();
+    }, 0);
+  };
+
+  const handleMonthClick = () => {
+    setIsEditingMonth(true);
+    setMonthInput(currentMonth.toString());
+    setTimeout(() => {
+      monthInputRef.current?.focus();
+      monthInputRef.current?.select();
+    }, 0);
+  };
+
+  const handleYearSubmit = () => {
+    const year = parseInt(yearInput, 10);
+    
+    // 유효성 검사
+    if (isNaN(year) || year < 1900 || year > 2100) {
+      setYearInput(currentYear.toString());
+      setIsEditingYear(false);
+      return;
+    }
+
+    // 해당 년도의 현재 월 첫 번째 날짜로 이동
+    const targetDate = new Date(year, currentMonth - 1, 1);
+    const targetWeekStart = getWeekStart(targetDate);
+    setCurrentWeekStart(targetWeekStart);
+    
+    // 선택된 날짜도 해당 날짜로 변경
+    onDateChange(formatDateToString(targetDate));
+    
+    setIsEditingYear(false);
+  };
+
+  const handleMonthSubmit = () => {
+    const month = parseInt(monthInput, 10);
+    
+    // 유효성 검사
+    if (isNaN(month) || month < 1 || month > 12) {
+      setMonthInput(currentMonth.toString());
+      setIsEditingMonth(false);
+      return;
+    }
+
+    // 해당 월의 첫 번째 날짜로 이동
+    const targetDate = new Date(currentYear, month - 1, 1);
+    const targetWeekStart = getWeekStart(targetDate);
+    setCurrentWeekStart(targetWeekStart);
+    
+    // 선택된 날짜도 해당 날짜로 변경
+    onDateChange(formatDateToString(targetDate));
+    
+    setIsEditingMonth(false);
+  };
+
+  const handleYearKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') {
+      handleYearSubmit();
+    } else if (e.key === 'Escape') {
+      setYearInput(currentYear.toString());
+      setIsEditingYear(false);
+    } else if (e.key === 'Tab' && !e.shiftKey) {
+      // Tab 키로 월 입력으로 이동
+      e.preventDefault();
+      handleYearSubmit();
+      setTimeout(() => {
+        handleMonthClick();
+      }, 0);
+    }
+  };
+
+  const handleMonthKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') {
+      handleMonthSubmit();
+    } else if (e.key === 'Escape') {
+      setMonthInput(currentMonth.toString());
+      setIsEditingMonth(false);
+    }
+  };
+
   const currentMonth = weekDays[3].getMonth() + 1; // 중간 날짜 기준
   const currentYear = weekDays[3].getFullYear();
 
@@ -119,9 +212,62 @@ export default function Calendar({ selectedDate, onDateChange, diaryDates = new 
         </button>
         
         <div className="text-center">
-          <span className="text-[#090615]">
-            {currentYear}년 {currentMonth}월
-          </span>
+          <div className="flex items-center gap-1 justify-center">
+            {isEditingYear ? (
+              <motion.input
+                ref={yearInputRef}
+                type="number"
+                value={yearInput}
+                onChange={(e) => setYearInput(e.target.value)}
+                onBlur={handleYearSubmit}
+                onKeyDown={handleYearKeyDown}
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.95 }}
+                transition={{ duration: 0.2 }}
+                className="w-16 text-center text-[#090615] border-b-2 border-[#745ede] focus:outline-none bg-transparent focus:border-[#8B7FE8] transition-colors"
+                min="1900"
+                max="2100"
+              />
+            ) : (
+              <motion.button
+                onClick={handleYearClick}
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                className="text-[#090615] hover:text-[#745ede] transition-colors cursor-pointer px-1 py-0.5 rounded hover:bg-gray-50"
+              >
+                {currentYear}
+              </motion.button>
+            )}
+            <span className="text-[#090615]">년</span>
+            {isEditingMonth ? (
+              <motion.input
+                ref={monthInputRef}
+                type="number"
+                value={monthInput}
+                onChange={(e) => setMonthInput(e.target.value)}
+                onBlur={handleMonthSubmit}
+                onKeyDown={handleMonthKeyDown}
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.95 }}
+                transition={{ duration: 0.2 }}
+                className="w-10 text-center text-[#090615] border-b-2 border-[#745ede] focus:outline-none bg-transparent focus:border-[#8B7FE8] transition-colors"
+                min="1"
+                max="12"
+              />
+            ) : (
+              <motion.button
+                onClick={handleMonthClick}
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                className="text-[#090615] hover:text-[#745ede] transition-colors cursor-pointer px-1 py-0.5 rounded hover:bg-gray-50"
+              >
+                {currentMonth}
+              </motion.button>
+            )}
+            <span className="text-[#090615]">월</span>
+          </div>
         </div>
 
         <button

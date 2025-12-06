@@ -198,6 +198,7 @@ export default function ParallelDetailPage() {
                           description={activity.content}
                           onAddToBucketList={handleAddToBucketList}
                           isInBucketList={addedToBucketList.has(activity.id)}
+                          enableDetailLink={true}
                         />
                       </div>
                     ))}

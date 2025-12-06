@@ -236,6 +236,7 @@ export default function BucketListPage() {
                   title={item.title}
                   description={item.description}
                   variant="white"
+                  enableDetailLink={true}
                   onDelete={(id) => {
                     handleDelete(id);
                   }}

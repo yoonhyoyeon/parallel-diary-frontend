@@ -207,6 +207,7 @@ export default function ScenarioRecommendCard({
                   description={scenario.description}
                   onAddToBucketList={handleAddToBucketList}
                   isInBucketList={addedToBucketListState.has(scenario.id)}
+                  enableDetailLink={true}
                 />
               ))}
             </motion.div>

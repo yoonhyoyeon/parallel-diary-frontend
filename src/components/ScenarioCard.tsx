@@ -1,4 +1,5 @@
 import PlusIcon from '@/assets/icons/plus.svg?react';
+import { useNavigate } from '@tanstack/react-router';
 
 interface ScenarioCardProps {
   id: string;
@@ -9,6 +10,7 @@ interface ScenarioCardProps {
   isInBucketList?: boolean;
   variant?: 'default' | 'white';
   onDelete?: (id: string) => void;
+  enableDetailLink?: boolean;
 }
 
 // ID를 기반으로 1~20 사이의 고정된 랜덤 값 생성
@@ -31,8 +33,10 @@ export default function ScenarioCard({
   onAddToBucketList,
   isInBucketList = false,
   variant = 'default',
-  onDelete
+  onDelete,
+  enableDetailLink = false,
 }: ScenarioCardProps) {
+  const navigate = useNavigate();
   const score = generateScoreFromId(id);
   const titleColor = score >= 10 ? '#68a1f2' : '#9e89ff';
   
@@ -49,6 +53,12 @@ export default function ScenarioCard({
       onDelete(id);
     }
   };
+
+  const handleCardClick = () => {
+    if (enableDetailLink) {
+      navigate({ to: '/activity/$id', params: { id } });
+    }
+  };
   
   const isWhiteVariant = variant === 'white';
   const bgColor = isWhiteVariant ? 'bg-white' : 'bg-[#090615]';
@@ -57,13 +67,18 @@ export default function ScenarioCard({
   const buttonHoverBg = isWhiteVariant ? 'hover:bg-gray-100' : 'hover:bg-white/10';
   const buttonTextColor = isWhiteVariant ? 'text-[#595959] hover:text-[#181818]' : 'text-[#d9d4ff] hover:text-white';
   
+  const cardClasses = `flex-1 ${bgColor} rounded-[24px] p-5 lg:p-6 flex flex-col gap-3 lg:gap-4 h-full min-h-0 relative group ${isWhiteVariant ? 'shadow-[0px_1px_10px_0px_rgba(0,0,0,0.08)]' : ''} ${enableDetailLink ? 'cursor-pointer' : ''}`;
+  
   return (
-    <div className={`flex-1 ${bgColor} rounded-[24px] p-5 lg:p-6 flex flex-col gap-3 lg:gap-4 h-full min-h-0 relative group ${isWhiteVariant ? 'shadow-[0px_1px_10px_0px_rgba(0,0,0,0.08)]' : ''}`}>
+    <div className={cardClasses} onClick={handleCardClick}>
       <h3
-        className="text-lg lg:text-[20px] font-bold shrink-0"
+        className="text-lg lg:text-[20px] font-bold shrink-0 flex items-center gap-2"
         style={{ color: titleColor }}
       >
-        {emoji} {title}
+        <span>{emoji}</span>
+        <span className={enableDetailLink ? 'group-hover:underline underline-offset-4 transition-all duration-200' : ''}>
+          {title}
+        </span>
       </h3>
       <p className={`text-sm lg:text-[16px] ${textColor} leading-[1.5] flex-1 min-h-0 line-clamp-4`}>
         {description}

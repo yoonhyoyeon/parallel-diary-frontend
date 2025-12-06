@@ -11,6 +11,7 @@ import ParallelDetailPage from '../pages/ParallelDetailPage';
 import AnalysisPage from '../pages/AnalysisPage';
 import DiaryDetailLayout from '../pages/diaries/DiaryDetailLayout';
 import BucketListPage from '../pages/BucketListPage';
+import ActivityDetailPage from '../pages/ActivityDetailPage';
 
 // 인증 체크 함수
 const checkAuth = () => {
@@ -133,4 +134,10 @@ export const bucketListRoute = createRoute({
   component: BucketListPage,
 });
 
+// 추천 활동 상세 페이지
+export const activityDetailRoute = createRoute({
+  getParentRoute: () => protectedRoute,
+  path: '/activity/$id',
+  component: ActivityDetailPage,
+});
 

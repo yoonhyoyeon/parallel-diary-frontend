@@ -134,15 +134,35 @@ export default function DiaryListPage() {
       <div className="relative z-10">
         {/* 헤더와 뒤로가기 버튼 */}
         <motion.div 
-          className="flex items-center gap-3 md:gap-4 mb-6 md:mb-[27px]"
+          className="flex items-center justify-between gap-3 md:gap-4 mb-6 md:mb-[27px]"
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
         >
-          <Link to="/" className="flex items-center justify-center hover:opacity-70 transition-opacity">
-            <ArrowLeftIcon width={20} height={20} className="text-soft-black md:w-6 md:h-6" />
+          <div className="flex items-center gap-3 md:gap-4">
+            <Link to="/" className="flex items-center justify-center hover:opacity-70 transition-opacity">
+              <ArrowLeftIcon width={20} height={20} className="text-soft-black md:w-6 md:h-6" />
+            </Link>
+            <h1 className="text-xl md:text-2xl lg:text-[36px] font-bold text-soft-black">내 일기</h1>
+          </div>
+          <Link
+            to="/bucketlist"
+            className="flex items-center gap-2 text-sm md:text-base text-[#745ede] hover:text-[#6348c7] transition-colors font-semibold px-4 py-2 rounded-lg hover:bg-[#745ede]/10 border border-[#745ede]/30 hover:border-[#745ede]/50"
+          >
+            <svg
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+            </svg>
+            버킷리스트
           </Link>
-          <h1 className="text-xl md:text-2xl lg:text-[36px] font-bold text-black">내 일기</h1>
         </motion.div>
 
       {/* 탭 */}

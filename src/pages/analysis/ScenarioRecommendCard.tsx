@@ -1,5 +1,5 @@
-import { motion, AnimatePresence } from 'framer-motion';
-import { useState, useEffect } from 'react';
+import { AnimatePresence, motion } from 'framer-motion';
+import { useEffect, useState } from 'react';
 import ArrowLeftIcon from '@/assets/icons/arrow_left.svg?react';
 import ArrowRightIcon from '@/assets/icons/arrow_right.svg?react';
 import ScenarioCard from '@/components/ScenarioCard';
@@ -14,13 +14,29 @@ export interface Scenario {
   score: number;
 }
 
-export default function ScenarioRecommendCard() {
+interface ScenarioRecommendCardProps {
+  title?: string;
+  description?: string;
+  onAddToBucketList?: (id: string, item?: { id: string; emoji: string; title: string; description: string }) => void;
+  addedToBucketList?: Set<string>;
+  variant?: 'default' | 'bucketlist';
+}
+
+export default function ScenarioRecommendCard({
+  title = '추천하는 평행 시나리오',
+  description = '이런 선택들이 당신의 하루를 더 풍요롭게 만들 수 있어요,',
+  onAddToBucketList,
+  addedToBucketList,
+  variant = 'default',
+}: ScenarioRecommendCardProps = {}) {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [direction, setDirection] = useState(0);
   const [isMobile, setIsMobile] = useState(false);
-  const [scenarios, setScenarios] = useState<Scenario[]>([]);
+  const [scenarios, setScenarios] = useState<Array<Scenario>>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [internalAddedToBucketList, setInternalAddedToBucketList] = useState<Set<string>>(new Set());
+  const addedToBucketListState = addedToBucketList ?? internalAddedToBucketList;
 
   // 모바일 감지
   useEffect(() => {
@@ -41,7 +57,7 @@ export default function ScenarioRecommendCard() {
         const data = await getRecommendedActivities();
         
         // API 응답을 Scenario 형식으로 변환
-        const formattedScenarios: Scenario[] = data.map((activity) => ({
+        const formattedScenarios: Array<Scenario> = data.map((activity) => ({
           id: activity.id,
           emoji: activity.emoji,
           title: activity.title,
@@ -61,7 +77,7 @@ export default function ScenarioRecommendCard() {
     fetchRecommendedActivities();
   }, []);
 
-  const itemsPerPage = isMobile ? 1 : 2;
+  const itemsPerPage = isMobile ? 1 : variant === 'bucketlist' ? 3 : 2;
 
   const handlePrev = () => {
     setDirection(-1);
@@ -77,20 +93,39 @@ export default function ScenarioRecommendCard() {
   const isLastPage = currentIndex + itemsPerPage >= scenarios.length;
   const visibleScenarios = scenarios.slice(currentIndex, currentIndex + itemsPerPage);
 
+  const handleAddToBucketList = (id: string) => {
+    if (onAddToBucketList) {
+      const scenario = scenarios.find((s) => s.id === id);
+      if (scenario) {
+        onAddToBucketList(id, {
+          id: scenario.id,
+          emoji: scenario.emoji,
+          title: scenario.title,
+          description: scenario.description,
+        });
+      } else {
+        onAddToBucketList(id);
+      }
+    } else {
+      // 로컬 상태만 업데이트 (UI만)
+      setInternalAddedToBucketList((prev) => new Set(prev).add(id));
+    }
+  };
+
   if (isLoading) {
     return <SkeletonCard variant="default" />;
   }
 
   return (
-    <div className="bg-white rounded-[24px] shadow-[0px_1px_10px_0px_rgba(0,0,0,0.08)] p-6 lg:p-8">
+    <div className={`${variant === 'bucketlist' ? 'bg-transparent py-6 lg:py-8' : 'bg-white rounded-[24px] shadow-[0px_1px_10px_0px_rgba(0,0,0,0.08)] p-6 lg:p-8'}`}>
       {/* 헤더 */}
       <div className="flex items-start justify-between mb-6">
         <div>
-          <h2 className="text-lg lg:text-[24px] font-bold text-[#020105] mb-2">
-            추천하는 평행 시나리오
+          <h2 className="text-lg lg:text-[24px] font-bold text-[#2b2b2b] mb-2">
+            {title}
           </h2>
           <p className="text-sm lg:text-[16px] text-[#303030]">
-            이런 선택들이 당신의 하루를 더 풍요롭게 만들 수 있어요,
+            {description}
           </p>
         </div>
         {/* 네비게이션 버튼 */}
@@ -123,7 +158,7 @@ export default function ScenarioRecommendCard() {
       </div>
 
       {/* 시나리오 카드들 */}
-      <div className="relative overflow-hidden h-[180px]">
+      <div className="relative overflow-hidden min-h-[220px]">
         {error ? (
           /* 에러 상태 */
           <div className="flex items-center justify-center h-full">
@@ -140,7 +175,7 @@ export default function ScenarioRecommendCard() {
             <motion.div
               key={currentIndex}
               custom={direction}
-              className="flex gap-4 lg:gap-6 absolute inset-0"
+              className="flex gap-4 lg:gap-6 absolute inset-0 items-stretch"
               variants={{
                 enter: (direction: number) => ({
                   x: direction > 0 ? '100%' : '-100%',
@@ -170,6 +205,8 @@ export default function ScenarioRecommendCard() {
                   emoji={scenario.emoji}
                   title={scenario.title}
                   description={scenario.description}
+                  onAddToBucketList={handleAddToBucketList}
+                  isInBucketList={addedToBucketListState.has(scenario.id)}
                 />
               ))}
             </motion.div>

@@ -1,17 +1,23 @@
+import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { useNavigate } from '@tanstack/react-router';
-import ParticleBackground from '@/components/ParticleBackground';
-import GradientBackground from '@/components/GradientBackground';
-import ArrowLeftIcon from '@/assets/icons/arrow_left.svg?react';
 import MonotonyScoreCard from './analysis/MonotonyScoreCard';
 import MonotonyTrendCard from './analysis/MonotonyTrendCard';
 import KeywordsCard from './analysis/KeywordsCard';
 import DiaryStatusCard from './analysis/DiaryStatusCard';
 import ScenarioRecommendCard from './analysis/ScenarioRecommendCard';
 import DailyTypeCard from './analysis/DailyTypeCard';
+import ParticleBackground from '@/components/ParticleBackground';
+import GradientBackground from '@/components/GradientBackground';
+import ArrowLeftIcon from '@/assets/icons/arrow_left.svg?react';
 
 export default function AnalysisPage() {
   const navigate = useNavigate();
+  const [addedToBucketList, setAddedToBucketList] = useState<Set<string>>(new Set());
+
+  const handleAddToBucketList = (id: string) => {
+    setAddedToBucketList((prev) => new Set(prev).add(id));
+  };
 
   return (
     <main className="flex justify-center min-h-screen bg-white relative px-4">
@@ -32,7 +38,7 @@ export default function AnalysisPage() {
           >
             <ArrowLeftIcon width={24} height={24} className="text-soft-black" />
           </button>
-          <h1 className="text-2xl lg:text-[36px] font-bold text-black">
+          <h1 className="text-2xl lg:text-[36px] font-bold text-soft-black">
             나의 일상 분석
           </h1>
         </motion.div>
@@ -50,7 +56,10 @@ export default function AnalysisPage() {
           <div className="flex flex-col gap-6 min-w-0">
             <DiaryStatusCard />
             <MonotonyTrendCard />
-            <ScenarioRecommendCard />
+            <ScenarioRecommendCard
+              onAddToBucketList={handleAddToBucketList}
+              addedToBucketList={addedToBucketList}
+            />
           </div>
         </div>
     </div>

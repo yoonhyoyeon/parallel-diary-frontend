@@ -1,8 +1,14 @@
+import PlusIcon from '@/assets/icons/plus.svg?react';
+
 interface ScenarioCardProps {
   id: string;
   emoji: string;
   title: string;
   description: string;
+  onAddToBucketList?: (id: string) => void;
+  isInBucketList?: boolean;
+  variant?: 'default' | 'white';
+  onDelete?: (id: string) => void;
 }
 
 // ID를 기반으로 1~20 사이의 고정된 랜덤 값 생성
@@ -17,22 +23,101 @@ function generateScoreFromId(id: string): number {
   return (Math.abs(hash) % 20) + 1;
 }
 
-export default function ScenarioCard({ id, emoji, title, description }: ScenarioCardProps) {
+export default function ScenarioCard({ 
+  id, 
+  emoji, 
+  title, 
+  description,
+  onAddToBucketList,
+  isInBucketList = false,
+  variant = 'default',
+  onDelete
+}: ScenarioCardProps) {
   const score = generateScoreFromId(id);
   const titleColor = score >= 10 ? '#68a1f2' : '#9e89ff';
   
+  const handleAddClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (onAddToBucketList && !isInBucketList) {
+      onAddToBucketList(id);
+    }
+  };
+
+  const handleDeleteClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (onDelete) {
+      onDelete(id);
+    }
+  };
+  
+  const isWhiteVariant = variant === 'white';
+  const bgColor = isWhiteVariant ? 'bg-white' : 'bg-[#090615]';
+  const textColor = isWhiteVariant ? 'text-[#181818]' : 'text-[#d9d4ff]';
+  const scoreColor = isWhiteVariant ? 'text-[#878787]' : 'text-[#929292]';
+  const buttonHoverBg = isWhiteVariant ? 'hover:bg-gray-100' : 'hover:bg-white/10';
+  const buttonTextColor = isWhiteVariant ? 'text-[#595959] hover:text-[#181818]' : 'text-[#d9d4ff] hover:text-white';
+  
   return (
-    <div className="flex-1 bg-[#090615] rounded-[24px] p-5 lg:p-6 flex flex-col gap-3 lg:gap-4">
+    <div className={`flex-1 ${bgColor} rounded-[24px] p-5 lg:p-6 flex flex-col gap-3 lg:gap-4 h-full min-h-0 relative group ${isWhiteVariant ? 'shadow-[0px_1px_10px_0px_rgba(0,0,0,0.08)]' : ''}`}>
       <h3
-        className="text-lg lg:text-[20px] font-bold"
+        className="text-lg lg:text-[20px] font-bold shrink-0"
         style={{ color: titleColor }}
       >
         {emoji} {title}
       </h3>
-      <p className="text-sm lg:text-[16px] text-[#d9d4ff] leading-[1.4] flex-1">
+      <p className={`text-sm lg:text-[16px] ${textColor} leading-[1.5] flex-1 min-h-0 line-clamp-4`}>
         {description}
       </p>
-      <p className="text-xs lg:text-[14px] text-[#929292]">+ {score}</p>
+      <div className="flex items-center justify-between shrink-0">
+        <p className={`text-xs lg:text-[14px] ${scoreColor}`}>+ {score}</p>
+        {onAddToBucketList && !isInBucketList && (
+          <button
+            onClick={handleAddClick}
+            className={`flex items-center gap-1.5 text-xs lg:text-[14px] ${buttonTextColor} transition-colors px-3 py-1.5 rounded-lg ${buttonHoverBg}`}
+          >
+            <PlusIcon width={12} height={12} />
+            버킷리스트에 추가
+          </button>
+        )}
+        {isInBucketList && !onDelete && (
+          <span className="flex items-center gap-1.5 text-xs lg:text-[14px] text-[#745ede] px-3 py-1.5">
+            <svg
+              width="12"
+              height="12"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <path d="M5 13l4 4L19 7"></path>
+            </svg>
+            추가됨
+          </span>
+        )}
+        {onDelete && (
+          <button
+            onClick={handleDeleteClick}
+            className={`flex items-center gap-1.5 text-xs lg:text-[14px] text-red-400 hover:text-red-500 transition-all duration-200 px-3 py-1.5 rounded-lg opacity-0 group-hover:opacity-100 ${isWhiteVariant ? 'hover:bg-red-50' : 'hover:bg-red-500/10'}`}
+          >
+            <svg
+              width="12"
+              height="12"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <path d="M3 6h18"></path>
+              <path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"></path>
+            </svg>
+            삭제
+          </button>
+        )}
+      </div>
     </div>
   );
 }

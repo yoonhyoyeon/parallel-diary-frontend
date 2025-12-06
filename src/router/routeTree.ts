@@ -11,6 +11,7 @@ import {
   diaryDetailRoute,
   parallelDetailRoute,
   analysisRoute,
+  bucketListRoute,
 } from './routes';
 
 export const routeTree = rootRoute.addChildren([
@@ -26,6 +27,7 @@ export const routeTree = rootRoute.addChildren([
     diaryDetailRoute,
     parallelDetailRoute,
     analysisRoute,
+    bucketListRoute,
   ]),
 ]);
 

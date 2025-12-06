@@ -10,6 +10,7 @@ import DiaryDetailPage from '../pages/DiaryDetailPage';
 import ParallelDetailPage from '../pages/ParallelDetailPage';
 import AnalysisPage from '../pages/AnalysisPage';
 import DiaryDetailLayout from '../pages/diaries/DiaryDetailLayout';
+import BucketListPage from '../pages/BucketListPage';
 
 // 인증 체크 함수
 const checkAuth = () => {
@@ -123,6 +124,13 @@ export const analysisRoute = createRoute({
   getParentRoute: () => protectedRoute,
   path: '/analysis',
   component: AnalysisPage,
+});
+
+// 버킷리스트 페이지
+export const bucketListRoute = createRoute({
+  getParentRoute: () => protectedRoute,
+  path: '/bucketlist',
+  component: BucketListPage,
 });
 
 

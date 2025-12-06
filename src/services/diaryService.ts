@@ -213,3 +213,73 @@ export async function getMonotonyIndices(): Promise<MonotonyIndex[]> {
   );
 }
 
+// 버킷리스트 관련 인터페이스 및 함수
+export interface BucketListItem {
+  id: string;
+  emoji: string;
+  title: string;
+  description: string;
+  isCompleted: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+/**
+ * 버킷리스트 아이템 전체 조회
+ * @returns 버킷리스트 아이템 배열
+ */
+export async function getBucketListItems(): Promise<Array<BucketListItem>> {
+  return apiClient<Array<BucketListItem>>(
+    '/bucket-list',
+    {
+      method: 'GET',
+    },
+    'api'
+  );
+}
+
+/**
+ * 버킷리스트에 아이템 추가
+ * @param activityId 추천 활동 ID
+ * @returns 추가된 버킷리스트 아이템
+ */
+export async function addToBucketList(activityId: string): Promise<BucketListItem> {
+  return apiClient<BucketListItem>(
+    '/bucket-list',
+    {
+      method: 'POST',
+      body: JSON.stringify({ activityId }),
+    },
+    'api'
+  );
+}
+
+/**
+ * 버킷리스트 아이템 완료 상태 토글
+ * @param id 버킷리스트 아이템 ID
+ * @returns 업데이트된 버킷리스트 아이템
+ */
+export async function toggleBucketListItem(id: string): Promise<BucketListItem> {
+  return apiClient<BucketListItem>(
+    `/bucket-list/${id}/toggle`,
+    {
+      method: 'PATCH',
+    },
+    'api'
+  );
+}
+
+/**
+ * 버킷리스트 아이템 삭제
+ * @param id 버킷리스트 아이템 ID
+ */
+export async function deleteBucketListItem(id: string): Promise<void> {
+  return apiClient<void>(
+    `/bucket-list/${id}`,
+    {
+      method: 'DELETE',
+    },
+    'api'
+  );
+}
+

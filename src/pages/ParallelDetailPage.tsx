@@ -16,6 +16,7 @@ export default function ParallelDetailPage() {
   const [parallelDiary, setParallelDiary] = useState<ParallelDiaryDetail | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [addedToBucketList, setAddedToBucketList] = useState<Set<string>>(new Set());
   
   // API로부터 평행일기 데이터 가져오기
   useEffect(() => {
@@ -53,6 +54,10 @@ export default function ParallelDetailPage() {
     hour12: true
   }) : '';
 
+  const handleAddToBucketList = (activityId: string) => {
+    // 로컬 상태만 업데이트 (UI만)
+    setAddedToBucketList((prev) => new Set(prev).add(activityId));
+  };
 
   return (
     <div className="min-h-screen max-w-[1030px] mx-auto px-4 md:px-6 lg:px-5 py-6 md:py-8 lg:py-10 flex flex-col">
@@ -191,6 +196,8 @@ export default function ParallelDetailPage() {
                           emoji={activity.emoji}
                           title={activity.title}
                           description={activity.content}
+                          onAddToBucketList={handleAddToBucketList}
+                          isInBucketList={addedToBucketList.has(activity.id)}
                         />
                       </div>
                     ))}

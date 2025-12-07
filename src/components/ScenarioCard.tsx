@@ -1,4 +1,5 @@
 import { useNavigate } from '@tanstack/react-router';
+import { motion } from 'framer-motion';
 import PlusIcon from '@/assets/icons/plus.svg?react';
 
 interface ScenarioCardProps {
@@ -95,8 +96,41 @@ export default function ScenarioCard({
           </button>
         )}
         {isInBucketList && !onDelete && (
-          <span className="flex items-center gap-1.5 text-xs lg:text-[14px] text-[#745ede] px-3 py-1.5">
-            <svg
+          <motion.div
+            initial={{ scale: 0, opacity: 0 }}
+            animate={{ 
+              scale: 1,
+              opacity: 1,
+            }}
+            transition={{
+              duration: 0.4,
+              ease: "easeOut",
+            }}
+            className="flex items-center gap-1.5 text-xs lg:text-[14px] text-[#745ede] px-3 py-1.5 relative"
+          >
+            {/* 반짝임 효과 배경 */}
+            <motion.div
+              initial={{ scale: 0, opacity: 0 }}
+              animate={{ 
+                scale: [0, 1.5, 0],
+                opacity: [0, 0.6, 0],
+              }}
+              transition={{
+                duration: 0.6,
+                ease: "easeOut",
+              }}
+              className="absolute inset-0 bg-[#745ede] rounded-lg"
+            />
+            
+            {/* 체크 아이콘 */}
+            <motion.svg
+              initial={{ pathLength: 0 }}
+              animate={{ pathLength: 1 }}
+              transition={{
+                duration: 0.4,
+                delay: 0.2,
+                ease: "easeInOut"
+              }}
               width="12"
               height="12"
               viewBox="0 0 24 24"
@@ -105,11 +139,57 @@ export default function ScenarioCard({
               strokeWidth="2.5"
               strokeLinecap="round"
               strokeLinejoin="round"
+              className="relative z-10"
             >
-              <path d="M5 13l4 4L19 7"></path>
-            </svg>
-            추가됨
-          </span>
+              <motion.path 
+                d="M5 13l4 4L19 7"
+                initial={{ pathLength: 0 }}
+                animate={{ pathLength: 1 }}
+                transition={{
+                  duration: 0.4,
+                  delay: 0.2,
+                  ease: "easeInOut"
+                }}
+              />
+            </motion.svg>
+            
+            {/* 텍스트 */}
+            <motion.span
+              initial={{ opacity: 0, x: -5 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{
+                duration: 0.3,
+                delay: 0.3,
+              }}
+              className="relative z-10"
+            >
+              추가됨
+            </motion.span>
+            
+            {/* 반짝이는 파티클들 */}
+            {[...Array(3)].map((_, i) => (
+              <motion.div
+                key={i}
+                initial={{ scale: 0, opacity: 0, x: 0, y: 0 }}
+                animate={{ 
+                  scale: [0, 1, 0],
+                  opacity: [0, 1, 0],
+                  x: [0, (i - 1) * 15],
+                  y: [0, -15 - i * 5],
+                }}
+                transition={{
+                  duration: 0.8,
+                  delay: 0.2 + i * 0.1,
+                  ease: "easeOut"
+                }}
+                className="absolute w-1 h-1 bg-[#745ede] rounded-full"
+                style={{
+                  left: '50%',
+                  top: '50%',
+                }}
+              />
+            ))}
+          </motion.div>
         )}
         {onDelete && (
           <button

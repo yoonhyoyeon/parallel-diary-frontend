@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react';
 import ArrowLeftIcon from '@/assets/icons/arrow_left.svg?react';
 import ArrowRightIcon from '@/assets/icons/arrow_right.svg?react';
 import ScenarioCard from '@/components/ScenarioCard';
-import { getRecommendedActivities } from '@/services/diaryService';
+import { getRecommendedActivities, toggleBucketList } from '@/services/diaryService';
 import SkeletonCard from '@/components/SkeletonCard';
 
 export interface Scenario {
@@ -56,8 +56,11 @@ export default function ScenarioRecommendCard({
         setError(null);
         const data = await getRecommendedActivities();
         
+        // bucket: false인 활동만 필터링 (추천 활동 목록)
+        const filteredActivities = data.filter((activity) => !activity.bucket);
+        
         // API 응답을 Scenario 형식으로 변환
-        const formattedScenarios: Array<Scenario> = data.map((activity) => ({
+        const formattedScenarios: Array<Scenario> = filteredActivities.map((activity) => ({
           id: activity.id,
           emoji: activity.emoji,
           title: activity.title,
@@ -93,22 +96,37 @@ export default function ScenarioRecommendCard({
   const isLastPage = currentIndex + itemsPerPage >= scenarios.length;
   const visibleScenarios = scenarios.slice(currentIndex, currentIndex + itemsPerPage);
 
-  const handleAddToBucketList = (id: string) => {
-    if (onAddToBucketList) {
-      const scenario = scenarios.find((s) => s.id === id);
-      if (scenario) {
-        onAddToBucketList(id, {
-          id: scenario.id,
-          emoji: scenario.emoji,
-          title: scenario.title,
-          description: scenario.description,
-        });
+  const handleAddToBucketList = async (id: string) => {
+    try {
+      // API 호출: bucket 값을 토글 (false -> true)
+      await toggleBucketList(id);
+      
+      // 먼저 "추가됨" 상태로 UI 업데이트
+      if (onAddToBucketList) {
+        const scenario = scenarios.find((s) => s.id === id);
+        if (scenario) {
+          onAddToBucketList(id, {
+            id: scenario.id,
+            emoji: scenario.emoji,
+            title: scenario.title,
+            description: scenario.description,
+          });
+        } else {
+          onAddToBucketList(id);
+        }
       } else {
-        onAddToBucketList(id);
+        // 로컬 상태만 업데이트 (UI만)
+        setInternalAddedToBucketList((prev) => new Set(prev).add(id));
       }
-    } else {
-      // 로컬 상태만 업데이트 (UI만)
-      setInternalAddedToBucketList((prev) => new Set(prev).add(id));
+      
+      // 2초 후 추천 활동 목록에서 제거
+      setTimeout(() => {
+        setScenarios((prev) => prev.filter((s) => s.id !== id));
+      }, 2000);
+    } catch (err) {
+      console.error('버킷리스트 추가 실패:', err);
+      // 에러 처리: 사용자에게 알림 (선택사항)
+      alert('버킷리스트에 추가하는데 실패했습니다.');
     }
   };
 

@@ -1,110 +1,122 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link } from '@tanstack/react-router';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import ParticleBackground from '@/components/ParticleBackground';
 import GradientBackground from '@/components/GradientBackground';
 import ArrowLeftIcon from '@/assets/icons/arrow_left.svg?react';
 import ScenarioCard from '@/components/ScenarioCard';
 import SkeletonCard from '@/components/SkeletonCard';
 import ScenarioRecommendCard from '@/pages/analysis/ScenarioRecommendCard';
+import { getRecommendedActivities, toggleBucketList } from '@/services/diaryService';
 
 interface BucketListItem {
   id: string;
   emoji: string;
   title: string;
   description: string;
-  isCompleted: boolean;
   createdAt: string;
 }
 
-// 더미 데이터
-const dummyBucketListItems: Array<BucketListItem> = [
-  {
-    id: '115',
-    emoji: '🎨',
-    title: '미술관 방문하기',
-    description: '평소에 가보고 싶었던 미술관을 방문하여 작품들을 감상하고, 카페에서 여유롭게 시간을 보내는 하루를 만들어보세요.',
-    isCompleted: false,
-    createdAt: new Date().toISOString(),
-  },
-  {
-    id: '103',
-    emoji: '☕',
-    title: '새로운 카페 탐방',
-    description: '한 번도 가보지 않은 동네의 숨겨진 카페를 찾아가서 특별한 커피와 디저트를 맛보며 새로운 분위기를 경험해보세요.',
-    isCompleted: false,
-    createdAt: new Date().toISOString(),
-  },
-  {
-    id: '3',
-    emoji: '📚',
-    title: '독서 모임 참여',
-    description: '관심 있는 주제의 독서 모임에 참여하여 같은 관심사를 가진 사람들과 책에 대해 이야기하고 새로운 인사이트를 얻어보세요.',
-    isCompleted: true,
-    createdAt: new Date().toISOString(),
-  },
-  {
-    id: '101',
-    emoji: '🌳',
-    title: '공원 산책하기',
-    description: '날씨 좋은 날 가까운 공원을 산책하며 자연을 만끽하고, 벤치에 앉아 여유롭게 주변 풍경을 감상하는 시간을 가져보세요.',
-    isCompleted: false,
-    createdAt: new Date().toISOString(),
-  },
-  {
-    id: '5',
-    emoji: '🎵',
-    title: '라이브 공연 관람',
-    description: '좋아하는 아티스트의 라이브 공연을 관람하여 음악의 생생한 감동을 느끼고, 공연장의 특별한 분위기를 경험해보세요.',
-    isCompleted: false,
-    createdAt: new Date().toISOString(),
-  },
-  {
-    id: '10',
-    emoji: '🍳',
-    title: '새로운 요리 도전',
-    description: '한 번도 만들어보지 않은 요리를 레시피를 보며 도전해보고, 완성된 요리를 가족이나 친구들과 함께 나눠 먹어보세요.',
-    isCompleted: false,
-    createdAt: new Date().toISOString(),
-  },
-];
-
 export default function BucketListPage() {
-  const [bucketListItems, setBucketListItems] = useState<Array<BucketListItem>>(dummyBucketListItems);
-  const [isLoading] = useState(false);
-  const [error] = useState<string | null>(null);
-  const [addedToBucketList, setAddedToBucketList] = useState<Set<string>>(
-    new Set(dummyBucketListItems.map((item) => item.id))
-  );
+  const [bucketListItems, setBucketListItems] = useState<Array<BucketListItem>>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [addedToBucketList, setAddedToBucketList] = useState<Set<string>>(new Set());
+  const [deletingItems, setDeletingItems] = useState<Set<string>>(new Set());
 
-  const handleAddToBucketList = (
+  // API로부터 버킷리스트 가져오기
+  useEffect(() => {
+    const fetchBucketList = async () => {
+      try {
+        setIsLoading(true);
+        setError(null);
+        const data = await getRecommendedActivities();
+        
+        // bucket: true인 활동만 필터링 (버킷리스트)
+        const bucketItems = data
+          .filter((activity) => activity.bucket)
+          .map((activity) => ({
+            id: activity.id,
+            emoji: activity.emoji,
+            title: activity.title,
+            description: activity.content,
+            createdAt: activity.createdAt,
+          }));
+        
+        setBucketListItems(bucketItems);
+        setAddedToBucketList(new Set(bucketItems.map((item) => item.id)));
+      } catch (err) {
+        console.error('버킷리스트 조회 실패:', err);
+        setError('버킷리스트를 불러오는데 실패했습니다.');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    
+    fetchBucketList();
+  }, []);
+
+  const handleAddToBucketList = async (
     id: string,
     item?: { id: string; emoji: string; title: string; description: string }
   ) => {
-    // 추천 활동에서 버킷리스트에 추가
-    if (item && !bucketListItems.find((bucketItem) => bucketItem.id === id)) {
-      setBucketListItems((prev) => [
-        ...prev,
-        {
-          id: item.id,
-          emoji: item.emoji,
-          title: item.title,
-          description: item.description,
-          isCompleted: false,
-          createdAt: new Date().toISOString(),
-        },
-      ]);
+    try {
+      // API 호출: bucket 값을 토글 (false -> true)
+      await toggleBucketList(id);
+      
+      // 추천 활동에서 버킷리스트에 추가
+      if (item && !bucketListItems.find((bucketItem) => bucketItem.id === id)) {
+        setBucketListItems((prev) => [
+          {
+            id: item.id,
+            emoji: item.emoji,
+            title: item.title,
+            description: item.description,
+            createdAt: new Date().toISOString(),
+          },
+          ...prev,
+        ]);
+      }
+      setAddedToBucketList((prev) => new Set(prev).add(id));
+    } catch (err) {
+      console.error('버킷리스트 추가 실패:', err);
+      alert('버킷리스트에 추가하는데 실패했습니다.');
     }
-    setAddedToBucketList((prev) => new Set(prev).add(id));
   };
 
-  const handleDelete = (id: string) => {
-    setBucketListItems((prev) => prev.filter((item) => item.id !== id));
-    setAddedToBucketList((prev) => {
-      const newSet = new Set(prev);
-      newSet.delete(id);
-      return newSet;
-    });
+  const handleDelete = async (id: string) => {
+    try {
+      // 삭제 중 상태 추가 (애니메이션 트리거)
+      setDeletingItems((prev) => new Set(prev).add(id));
+      
+      // API 호출: bucket 값을 토글 (true -> false)
+      await toggleBucketList(id);
+      
+      // 애니메이션 시간만큼 대기 (0.5초)
+      setTimeout(() => {
+        // 로컬 상태 업데이트
+        setBucketListItems((prev) => prev.filter((item) => item.id !== id));
+        setAddedToBucketList((prev) => {
+          const newSet = new Set(prev);
+          newSet.delete(id);
+          return newSet;
+        });
+        setDeletingItems((prev) => {
+          const newSet = new Set(prev);
+          newSet.delete(id);
+          return newSet;
+        });
+      }, 500);
+    } catch (err) {
+      console.error('버킷리스트 삭제 실패:', err);
+      // 에러 시 삭제 중 상태 제거
+      setDeletingItems((prev) => {
+        const newSet = new Set(prev);
+        newSet.delete(id);
+        return newSet;
+      });
+      alert('버킷리스트에서 삭제하는데 실패했습니다.');
+    }
   };
 
 
@@ -200,49 +212,48 @@ export default function BucketListPage() {
         ) : (
           /* 버킷리스트 카드 그리드 */
           <motion.div
-            initial="hidden"
-            animate="visible"
-            variants={{
-              hidden: { opacity: 0 },
-              visible: {
-                opacity: 1,
-                transition: {
-                  staggerChildren: 0.12,
-                  delayChildren: 0.15,
-                }
-              }
-            }}
+            layout
             className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-5 lg:gap-[20px]"
           >
-            {bucketListItems.map((item) => (
-              <motion.div
-                key={item.id}
-                variants={{
-                  hidden: { opacity: 0, y: 15, scale: 0.96 },
-                  visible: { 
-                    opacity: 1, 
-                    y: 0, 
-                    scale: 1,
-                    transition: {
-                      duration: 0.8,
+            <AnimatePresence mode="popLayout">
+              {bucketListItems.map((item) => (
+                <motion.div
+                  key={item.id}
+                  layout
+                  initial={{ opacity: 0, y: 15, scale: 0.96 }}
+                  animate={{ 
+                    opacity: deletingItems.has(item.id) ? 0 : 1, 
+                    y: deletingItems.has(item.id) ? -20 : 0, 
+                    scale: deletingItems.has(item.id) ? 0.8 : 1,
+                  }}
+                  exit={{ 
+                    opacity: 0,
+                    scale: 0.8,
+                    y: -20,
+                  }}
+                  transition={{
+                    duration: 0.5,
+                    ease: [0.22, 1, 0.36, 1],
+                    layout: {
+                      duration: 0.5,
                       ease: [0.22, 1, 0.36, 1]
                     }
-                  }
-                }}
-              >
-                <ScenarioCard
-                  id={item.id}
-                  emoji={item.emoji}
-                  title={item.title}
-                  description={item.description}
-                  variant="white"
-                  enableDetailLink={true}
-                  onDelete={(id) => {
-                    handleDelete(id);
                   }}
-                />
-              </motion.div>
-            ))}
+                >
+                  <ScenarioCard
+                    id={item.id}
+                    emoji={item.emoji}
+                    title={item.title}
+                    description={item.description}
+                    variant="white"
+                    enableDetailLink={true}
+                    onDelete={(id) => {
+                      handleDelete(id);
+                    }}
+                  />
+                </motion.div>
+              ))}
+            </AnimatePresence>
           </motion.div>
         )}
       </div>

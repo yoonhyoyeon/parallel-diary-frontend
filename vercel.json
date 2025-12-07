@@ -1,6 +1,10 @@
 {
   "rewrites": [
     {
+      "source": "/api/naver/:path*",
+      "destination": "/api/naver-proxy"
+    },
+    {
       "source": "/api/ai/:path*",
       "destination": "http://43.202.81.16:3000/:path*"
     },

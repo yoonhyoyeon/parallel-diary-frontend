@@ -1,13 +1,16 @@
-import { useState, useEffect } from 'react';
-import { useParams, useNavigate } from '@tanstack/react-router';
+import { useEffect, useState } from 'react';
+import { useNavigate, useParams } from '@tanstack/react-router';
 import { motion } from 'framer-motion';
-import { Sparkles, Lightbulb, MapPin, Tag } from 'lucide-react';
+import { Lightbulb, MapPin, Sparkles, Tag } from 'lucide-react';
+import type { ActivityDetailData, PlaceSearchKeyword } from '@/services/openaiService';
+import type { NaverPlace } from '@/services/naverLocalService';
 import ParticleBackground from '@/components/ParticleBackground';
 import GradientBackground from '@/components/GradientBackground';
 import ArrowLeftIcon from '@/assets/icons/arrow_left.svg?react';
 import Button from '@/components/Button';
-import { getActivityDetailById, saveActivityDetailById, hasActivityDetail } from '@/services/activityDetailStorage';
-import { generateActivityDetail, type ActivityDetailData } from '@/services/openaiService';
+import { getActivityDetailById, hasActivityDetail, saveActivityDetailById } from '@/services/activityDetailStorage';
+import { generateActivityDetail } from '@/services/openaiService';
+import { searchMultipleKeywords } from '@/services/naverLocalService';
 import { getRecommendedActivities } from '@/services/diaryService';
 
 export default function ActivityDetailPage() {
@@ -15,6 +18,7 @@ export default function ActivityDetailPage() {
   const id = params.id as string;
   const navigate = useNavigate();
   const [activityDetail, setActivityDetail] = useState<ActivityDetailData | null>(null);
+  const [recommendedPlaces, setRecommendedPlaces] = useState<Array<NaverPlace & { reason?: string }>>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
@@ -38,6 +42,38 @@ export default function ActivityDetailPage() {
         const cachedDetail = getActivityDetailById(id);
         if (cachedDetail) {
           setActivityDetail(cachedDetail);
+          
+          // 캐시된 장소 정보가 있으면 바로 사용
+          if (cachedDetail.recommendedPlaces && cachedDetail.recommendedPlaces.length > 0) {
+            setRecommendedPlaces(cachedDetail.recommendedPlaces);
+            setIsLoading(false);
+            return;
+          }
+          
+          // 캐시된 장소가 없으면 키워드로 검색
+          if (cachedDetail.placeSearchKeywords?.length) {
+            const keywords = cachedDetail.placeSearchKeywords.map((kw: string | PlaceSearchKeyword) => 
+              typeof kw === 'string' ? kw : kw.keyword
+            );
+            const places = await searchMultipleKeywords(keywords);
+            
+            // 추천 이유 매핑
+            const placesWithReason = places.map((place, index) => {
+              const keywordObj = cachedDetail.placeSearchKeywords![index];
+              return {
+                ...place,
+                reason: typeof keywordObj === 'object' ? keywordObj.reason : undefined
+              };
+            });
+            
+            setRecommendedPlaces(placesWithReason);
+            
+            // 검색 결과를 localStorage에 업데이트
+            const updatedDetail = { ...cachedDetail, recommendedPlaces: places };
+            saveActivityDetailById(id, updatedDetail);
+            setActivityDetail(updatedDetail);
+          }
+          
           setIsLoading(false);
           return;
         }
@@ -52,7 +88,7 @@ export default function ActivityDetailPage() {
         throw new Error('활동을 찾을 수 없습니다.');
       }
 
-      // 3. GPT API로 상세 정보 생성
+      // 3. GPT API로 상세 정보 생성 (검색 키워드 포함)
       const generatedDetail = await generateActivityDetail({
         id: activity.id,
         emoji: activity.emoji,
@@ -60,9 +96,30 @@ export default function ActivityDetailPage() {
         description: activity.content,
       });
 
-      // 4. localStorage에 저장
-      saveActivityDetailById(id, generatedDetail);
-      setActivityDetail(generatedDetail);
+      // 4. 생성된 키워드로 네이버 장소 검색
+      let placesWithReason: Array<NaverPlace & { reason?: string }> = [];
+      if (generatedDetail.placeSearchKeywords?.length) {
+        const keywords = generatedDetail.placeSearchKeywords.map((kw: string | PlaceSearchKeyword) => 
+          typeof kw === 'string' ? kw : kw.keyword
+        );
+        const places = await searchMultipleKeywords(keywords);
+        
+        // 추천 이유 매핑
+        placesWithReason = places.map((place, index) => {
+          const keywordObj = generatedDetail.placeSearchKeywords![index];
+          return {
+            ...place,
+            reason: typeof keywordObj === 'object' ? keywordObj.reason : undefined
+          };
+        });
+        
+        setRecommendedPlaces(placesWithReason);
+      }
+
+      // 5. 장소 정보 포함하여 localStorage에 저장
+      const detailWithPlaces = { ...generatedDetail, recommendedPlaces: placesWithReason };
+      saveActivityDetailById(id, detailWithPlaces);
+      setActivityDetail(detailWithPlaces);
     } catch (err) {
       console.error('활동 상세 정보 로드 실패:', err);
       setError(err instanceof Error ? err.message : '활동 상세 정보를 불러오는데 실패했습니다.');
@@ -295,7 +352,7 @@ export default function ActivityDetailPage() {
           </motion.div>
 
           {/* 추천 장소 */}
-          {activityDetail.recommendedPlaces && activityDetail.recommendedPlaces.length > 0 && (
+          {recommendedPlaces.length > 0 && (
             <motion.div
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
@@ -307,9 +364,8 @@ export default function ActivityDetailPage() {
                 추천 장소
               </h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {activityDetail.recommendedPlaces.map((place, index) => {
-                  const naverMapUrl = `https://map.naver.com/v5/search/${encodeURIComponent(place.name + ' ' + place.address)}`;
-                  const googleMapUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(place.name + ' ' + place.address)}`;
+                {recommendedPlaces.map((place, index) => {
+                  const naverMapUrl = `https://map.naver.com/v5/search/${encodeURIComponent(place.title)}`;
                   
                   return (
                     <motion.div
@@ -322,43 +378,38 @@ export default function ActivityDetailPage() {
                       <div className="flex items-start justify-between mb-2">
                         <div className="flex-1">
                           <h4 className="text-base md:text-lg font-bold text-[#2b2b2b] mb-1">
-                            {place.name}
+                            {place.title}
                           </h4>
                           <span className="inline-block px-2 py-1 bg-[#745ede]/10 text-[#745ede] rounded-full text-xs font-medium mb-2">
-                            {place.category}
+                            {place.category.split('>').pop()?.trim() || place.category}
                           </span>
                         </div>
                       </div>
-                      <p className="text-xs md:text-sm text-[#595959] mb-2">{place.address}</p>
-                      <p className="text-xs md:text-sm text-[#434343] mb-3 leading-relaxed">
-                        {place.description}
+                      {place.reason && (
+                        <p className="text-xs md:text-sm text-[#745ede] mb-2 font-medium">
+                          💡 {place.reason}
+                        </p>
+                      )}
+                      <p className="text-xs md:text-sm text-[#595959] mb-2">
+                        {place.roadAddress || place.address}
                       </p>
-                      <div className="flex gap-2">
-                        <a
-                          href={naverMapUrl}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 bg-[#03C75A] text-white rounded-lg text-xs md:text-sm font-medium hover:bg-[#02b350] transition-colors"
-                        >
-                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                            <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
-                            <circle cx="12" cy="10" r="3"></circle>
-                          </svg>
-                          네이버 지도
-                        </a>
-                        <a
-                          href={googleMapUrl}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 bg-[#4285F4] text-white rounded-lg text-xs md:text-sm font-medium hover:bg-[#3367D6] transition-colors"
-                        >
-                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                            <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
-                            <circle cx="12" cy="10" r="3"></circle>
-                          </svg>
-                          구글 지도
-                        </a>
-                      </div>
+                      {place.description && (
+                        <p className="text-xs md:text-sm text-[#434343] mb-3 leading-relaxed">
+                          {place.description}
+                        </p>
+                      )}
+                      <a
+                        href={naverMapUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center justify-center gap-1.5 px-3 py-1.5 bg-[#03C75A] text-white rounded-lg text-xs font-medium hover:bg-[#02b350] transition-colors"
+                      >
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+                          <circle cx="12" cy="10" r="3"></circle>
+                        </svg>
+                        네이버 지도
+                      </a>
                     </motion.div>
                   );
                 })}
@@ -371,6 +422,7 @@ export default function ActivityDetailPage() {
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.6 }}
+            className="mb-6"
           >
             <h3 className="text-lg md:text-xl font-bold text-[#2b2b2b] mb-4 flex items-center gap-2">
               <Tag className="w-5 h-5 md:w-6 md:h-6 text-[#745ede]" />
@@ -390,32 +442,24 @@ export default function ActivityDetailPage() {
               ))}
             </div>
           </motion.div>
-        </motion.div>
 
-        {/* 버튼 그룹 */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.7 }}
-          className="mt-6 flex flex-col sm:flex-row gap-3 justify-center"
-        >
-          <Button
-            variant="secondary"
-            onClick={() => navigate({ to: '/bucketlist' })}
-            className="w-full sm:w-auto"
+          {/* 버킷리스트 추가 버튼 */}
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.7 }}
+            className="flex justify-center"
           >
-            버킷리스트로 돌아가기
-          </Button>
-          <Button
-            variant="primary"
-            onClick={() => {
-              // 버킷리스트에 추가하는 로직은 나중에 구현 가능
-              alert('버킷리스트에 추가되었습니다!');
-            }}
-            className="w-full sm:w-auto"
-          >
-            버킷리스트에 추가
-          </Button>
+            <Button
+              variant="primary"
+              onClick={() => {
+                alert('버킷리스트에 추가되었습니다!');
+              }}
+              className="w-full sm:w-auto"
+            >
+              버킷리스트에 추가
+            </Button>
+          </motion.div>
         </motion.div>
       </div>
     </div>

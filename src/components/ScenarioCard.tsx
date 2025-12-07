@@ -1,5 +1,5 @@
-import PlusIcon from '@/assets/icons/plus.svg?react';
 import { useNavigate } from '@tanstack/react-router';
+import PlusIcon from '@/assets/icons/plus.svg?react';
 
 interface ScenarioCardProps {
   id: string;
@@ -114,7 +114,7 @@ export default function ScenarioCard({
         {onDelete && (
           <button
             onClick={handleDeleteClick}
-            className={`flex items-center gap-1.5 text-xs lg:text-[14px] text-red-400 hover:text-red-500 transition-all duration-200 px-3 py-1.5 rounded-lg opacity-0 group-hover:opacity-100 ${isWhiteVariant ? 'hover:bg-red-50' : 'hover:bg-red-500/10'}`}
+            className={`flex items-center gap-1.5 text-xs lg:text-[14px] text-red-400 hover:text-red-500 transition-colors px-3 py-1.5 rounded-lg ${isWhiteVariant ? 'hover:bg-red-50' : 'hover:bg-red-500/10'}`}
           >
             <svg
               width="12"

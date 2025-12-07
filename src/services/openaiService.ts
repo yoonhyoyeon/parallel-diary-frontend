@@ -2,11 +2,12 @@
  * OpenAI GPT API를 사용하여 추천 활동의 상세 정보를 생성하는 서비스
  */
 
-export interface RecommendedPlace {
-  name: string;
-  address: string;
-  description: string;
-  category: string;
+// NaverPlace 타입 import
+import type { NaverPlace } from './naverLocalService';
+
+export interface PlaceSearchKeyword {
+  keyword: string;
+  reason: string;
 }
 
 export interface ActivityDetailData {
@@ -15,12 +16,13 @@ export interface ActivityDetailData {
   title: string;
   description: string;
   detailedDescription: string;
-  benefits: string[];
-  tips: string[];
+  benefits: Array<string>;
+  tips: Array<string>;
   estimatedTime: string;
   difficulty: '쉬움' | '보통' | '어려움';
-  tags: string[];
-  recommendedPlaces: RecommendedPlace[];
+  tags: Array<string>;
+  placeSearchKeywords?: Array<PlaceSearchKeyword>; // 키워드 + 추천 이유
+  recommendedPlaces?: Array<NaverPlace>; // 네이버 검색 결과 캐시 (optional)
   generatedAt: string;
 }
 
@@ -54,17 +56,22 @@ export async function generateActivityDetail(
   "estimatedTime": "예상 소요 시간 (예: '30분~1시간', '2~3시간' 등)",
   "difficulty": "쉬움" 또는 "보통" 또는 "어려움",
   "tags": ["관련 태그 (3-5개, 예: '휴식', '창의성', '건강' 등)"],
-  "recommendedPlaces": [
+  "placeSearchKeywords": [
     {
-      "name": "실제 장소명 (구체적으로)",
-      "address": "주소 (서울 기준, 구체적으로)",
-      "description": "이 장소를 추천하는 이유 (1-2문장)",
-      "category": "카테고리 (예: '카페', '미술관', '공원', '레스토랑' 등)"
+      "keyword": "네이버 지역 검색 키워드",
+      "reason": "이 장소를 추천하는 이유 (한 문장)"
     }
   ]
 }
 
-recommendedPlaces는 3-4개 정도 추천해주세요. 실제로 존재하는 유명한 장소나 일반적인 장소 유형을 추천해주세요.`;
+⚠️ 중요: placeSearchKeywords는 3-4개의 객체 배열로 생성해주세요.
+- keyword: 검색 결과가 나올 수 있는 일반적인 키워드
+  ✅ 좋은 예: "서울 카페", "강남 미술관", "홍대 서점", "이태원 레스토랑"
+  ❌ 나쁜 예: "블루보틀 카페", "국립현대미술관 서울관" (너무 구체적)
+  지역명 + 장소 카테고리 조합으로 만들어주세요. 구체적인 상호명은 절대 사용하지 마세요.
+- reason: 왜 이 장소를 추천하는지 구체적인 이유 (30자 이내)
+  예: "조용한 분위기에서 작품 감상에 집중할 수 있어요"`;
+
 
   try {
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
@@ -74,19 +81,19 @@ recommendedPlaces는 3-4개 정도 추천해주세요. 실제로 존재하는 �
         'Authorization': `Bearer ${apiKey}`,
       },
       body: JSON.stringify({
-        model: 'gpt-3.5-turbo',
+        model: 'gpt-4o-mini',
         messages: [
           {
             role: 'system',
-            content: '당신은 일상 활동을 추천하고 상세 정보를 제공하는 전문가입니다. 사용자가 활동을 선택할 때 도움이 되는 매력적이고 실용적인 정보를 제공해주세요.'
+            content: '당신은 일상 활동을 추천하고 상세 정보를 제공하는 전문가입니다. 사용자가 활동을 선택할 때 도움이 되는 매력적이고 실용적인 정보를 제공해주세요. 장소 추천을 위해 네이버 지역 검색에서 사용할 구체적이고 검색 가능한 키워드를 생성해주세요.'
           },
           {
             role: 'user',
             content: prompt
           }
         ],
-        temperature: 0.7,
-        max_tokens: 1000,
+        temperature: 0.3,
+        max_tokens: 1200,
       }),
     });
 
@@ -115,7 +122,7 @@ recommendedPlaces는 3-4개 정도 추천해주세요. 실제로 존재하는 �
       estimatedTime: parsedContent.estimatedTime,
       difficulty: parsedContent.difficulty,
       tags: parsedContent.tags,
-      recommendedPlaces: parsedContent.recommendedPlaces || [],
+      placeSearchKeywords: parsedContent.placeSearchKeywords || [],
       generatedAt: new Date().toISOString(),
     };
   } catch (error) {
@@ -123,4 +130,3 @@ recommendedPlaces는 3-4개 정도 추천해주세요. 실제로 존재하는 �
     throw error;
   }
 }
-

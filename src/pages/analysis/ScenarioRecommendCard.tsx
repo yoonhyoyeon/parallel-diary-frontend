@@ -20,7 +20,6 @@ interface ScenarioRecommendCardProps {
   onAddToBucketList?: (id: string, item?: { id: string; emoji: string; title: string; description: string }) => void;
   addedToBucketList?: Set<string>;
   variant?: 'default' | 'bucketlist';
-  onRemoveFromBucketList?: (item: { id: string; emoji: string; title: string; description: string }) => void;
   removedFromBucketList?: { id: string; emoji: string; title: string; description: string } | null;
 }
 
@@ -30,7 +29,6 @@ export default function ScenarioRecommendCard({
   onAddToBucketList,
   addedToBucketList,
   variant = 'default',
-  onRemoveFromBucketList,
   removedFromBucketList,
 }: ScenarioRecommendCardProps = {}) {
   const [currentIndex, setCurrentIndex] = useState(0);

@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react';
 import ArrowLeftIcon from '@/assets/icons/arrow_left.svg?react';
 import ArrowRightIcon from '@/assets/icons/arrow_right.svg?react';
 import ScenarioCard from '@/components/ScenarioCard';
-import { getRecommendedActivities, toggleBucketList } from '@/services/diaryService';
+import { getRecommendedActivities } from '@/services/diaryService';
 import SkeletonCard from '@/components/SkeletonCard';
 
 export interface Scenario {
@@ -20,6 +20,8 @@ interface ScenarioRecommendCardProps {
   onAddToBucketList?: (id: string, item?: { id: string; emoji: string; title: string; description: string }) => void;
   addedToBucketList?: Set<string>;
   variant?: 'default' | 'bucketlist';
+  onRemoveFromBucketList?: (item: { id: string; emoji: string; title: string; description: string }) => void;
+  removedFromBucketList?: { id: string; emoji: string; title: string; description: string } | null;
 }
 
 export default function ScenarioRecommendCard({
@@ -28,6 +30,8 @@ export default function ScenarioRecommendCard({
   onAddToBucketList,
   addedToBucketList,
   variant = 'default',
+  onRemoveFromBucketList,
+  removedFromBucketList,
 }: ScenarioRecommendCardProps = {}) {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [direction, setDirection] = useState(0);
@@ -37,6 +41,25 @@ export default function ScenarioRecommendCard({
   const [error, setError] = useState<string | null>(null);
   const [internalAddedToBucketList, setInternalAddedToBucketList] = useState<Set<string>>(new Set());
   const addedToBucketListState = addedToBucketList ?? internalAddedToBucketList;
+
+  // 버킷리스트에서 삭제된 항목을 추천 활동에 추가
+  useEffect(() => {
+    if (removedFromBucketList) {
+      const { id, emoji, title, description } = removedFromBucketList;
+      if (!scenarios.find((s) => s.id === id)) {
+        setScenarios((prev) => [
+          {
+            id,
+            emoji,
+            title,
+            description,
+            score: 0,
+          },
+          ...prev,
+        ]);
+      }
+    }
+  }, [removedFromBucketList]);
 
   // 모바일 감지
   useEffect(() => {
@@ -96,38 +119,29 @@ export default function ScenarioRecommendCard({
   const isLastPage = currentIndex + itemsPerPage >= scenarios.length;
   const visibleScenarios = scenarios.slice(currentIndex, currentIndex + itemsPerPage);
 
-  const handleAddToBucketList = async (id: string) => {
-    try {
-      // API 호출: bucket 값을 토글 (false -> true)
-      await toggleBucketList(id);
-      
-      // 먼저 "추가됨" 상태로 UI 업데이트
-      if (onAddToBucketList) {
-        const scenario = scenarios.find((s) => s.id === id);
-        if (scenario) {
-          onAddToBucketList(id, {
-            id: scenario.id,
-            emoji: scenario.emoji,
-            title: scenario.title,
-            description: scenario.description,
-          });
-        } else {
-          onAddToBucketList(id);
-        }
+  const handleAddToBucketList = (id: string) => {
+    // ScenarioCard에서 API 호출 및 토스트 처리
+    // 여기서는 로컬 상태만 업데이트
+    if (onAddToBucketList) {
+      const scenario = scenarios.find((s) => s.id === id);
+      if (scenario) {
+        onAddToBucketList(id, {
+          id: scenario.id,
+          emoji: scenario.emoji,
+          title: scenario.title,
+          description: scenario.description,
+        });
       } else {
-        // 로컬 상태만 업데이트 (UI만)
-        setInternalAddedToBucketList((prev) => new Set(prev).add(id));
+        onAddToBucketList(id);
       }
-      
-      // 2초 후 추천 활동 목록에서 제거
-      setTimeout(() => {
-        setScenarios((prev) => prev.filter((s) => s.id !== id));
-      }, 2000);
-    } catch (err) {
-      console.error('버킷리스트 추가 실패:', err);
-      // 에러 처리: 사용자에게 알림 (선택사항)
-      alert('버킷리스트에 추가하는데 실패했습니다.');
+    } else {
+      setInternalAddedToBucketList((prev) => new Set(prev).add(id));
     }
+    
+    // 2초 후 추천 활동 목록에서 제거
+    setTimeout(() => {
+      setScenarios((prev) => prev.filter((s) => s.id !== id));
+    }, 2000);
   };
 
   if (isLoading) {
@@ -185,7 +199,7 @@ export default function ScenarioRecommendCard({
         ) : scenarios.length === 0 ? (
           /* 빈 상태 */
           <div className="flex items-center justify-center h-full">
-            <p className="text-sm text-gray-500">일기를 작성하면 활동을 추천해드려요</p>
+            <p className="text-sm text-gray-500">추천된 활동이 없어요.</p>
           </div>
         ) : (
           /* 시나리오 슬라이드 */

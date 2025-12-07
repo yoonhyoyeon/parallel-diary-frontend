@@ -1,6 +1,9 @@
 import { useNavigate } from '@tanstack/react-router';
 import { motion } from 'framer-motion';
+import { useState } from 'react';
 import PlusIcon from '@/assets/icons/plus.svg?react';
+import Toast from '@/components/Toast';
+import { toggleBucketList } from '@/services/diaryService';
 
 interface ScenarioCardProps {
   id: string;
@@ -40,11 +43,26 @@ export default function ScenarioCard({
   const navigate = useNavigate();
   const score = generateScoreFromId(id);
   const titleColor = score >= 10 ? '#68a1f2' : '#9e89ff';
+  const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
   
-  const handleAddClick = (e: React.MouseEvent) => {
+  const handleAddClick = async (e: React.MouseEvent) => {
     e.stopPropagation();
-    if (onAddToBucketList && !isInBucketList) {
-      onAddToBucketList(id);
+    if (isInBucketList) return;
+    
+    try {
+      // API 호출: bucket 값을 토글 (false -> true)
+      await toggleBucketList(id);
+      
+      // 성공 토스트 표시 (확인하기 버튼 포함)
+      setToast({ message: '버킷리스트에 추가되었습니다', type: 'success' });
+      
+      // 부모 컴포넌트에 알림 (optional callback)
+      if (onAddToBucketList) {
+        onAddToBucketList(id);
+      }
+    } catch (err) {
+      console.error('버킷리스트 추가 실패:', err);
+      setToast({ message: '버킷리스트 추가에 실패했습니다', type: 'error' });
     }
   };
 
@@ -71,7 +89,21 @@ export default function ScenarioCard({
   const cardClasses = `flex-1 ${bgColor} rounded-[24px] p-5 lg:p-6 flex flex-col gap-3 lg:gap-4 h-full min-h-0 relative group ${isWhiteVariant ? 'shadow-[0px_1px_10px_0px_rgba(0,0,0,0.08)]' : ''} ${enableDetailLink ? 'cursor-pointer' : ''}`;
   
   return (
-    <div className={cardClasses} onClick={handleCardClick}>
+    <>
+      {/* Toast 알림 */}
+      {toast && (
+        <Toast
+          message={toast.message}
+          type={toast.type}
+          isVisible={!!toast}
+          onClose={() => setToast(null)}
+          actionText={toast.type === 'success' ? '확인하기' : undefined}
+          onActionClick={toast.type === 'success' ? () => navigate({ to: '/bucketlist' }) : undefined}
+          duration={toast.type === 'success' ? undefined : 3000}
+        />
+      )}
+      
+      <div className={cardClasses} onClick={handleCardClick}>
       <h3
         className="text-lg lg:text-[20px] font-bold shrink-0 flex items-center gap-2"
         style={{ color: titleColor }}
@@ -213,7 +245,8 @@ export default function ScenarioCard({
           </button>
         )}
       </div>
-    </div>
+      </div>
+    </>
   );
 }
 

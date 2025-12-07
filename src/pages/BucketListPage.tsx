@@ -3,6 +3,7 @@ import { Link } from '@tanstack/react-router';
 import { motion, AnimatePresence } from 'framer-motion';
 import ParticleBackground from '@/components/ParticleBackground';
 import GradientBackground from '@/components/GradientBackground';
+import Toast from '@/components/Toast';
 import ArrowLeftIcon from '@/assets/icons/arrow_left.svg?react';
 import ScenarioCard from '@/components/ScenarioCard';
 import SkeletonCard from '@/components/SkeletonCard';
@@ -23,6 +24,8 @@ export default function BucketListPage() {
   const [error, setError] = useState<string | null>(null);
   const [addedToBucketList, setAddedToBucketList] = useState<Set<string>>(new Set());
   const [deletingItems, setDeletingItems] = useState<Set<string>>(new Set());
+  const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
+  const [removedItem, setRemovedItem] = useState<{ id: string; emoji: string; title: string; description: string } | null>(null);
 
   // API로부터 버킷리스트 가져오기
   useEffect(() => {
@@ -56,32 +59,32 @@ export default function BucketListPage() {
     fetchBucketList();
   }, []);
 
-  const handleAddToBucketList = async (
+  const handleAddToBucketList = (
     id: string,
     item?: { id: string; emoji: string; title: string; description: string }
   ) => {
-    try {
-      // API 호출: bucket 값을 토글 (false -> true)
-      await toggleBucketList(id);
-      
-      // 추천 활동에서 버킷리스트에 추가
-      if (item && !bucketListItems.find((bucketItem) => bucketItem.id === id)) {
-        setBucketListItems((prev) => [
-          {
-            id: item.id,
-            emoji: item.emoji,
-            title: item.title,
-            description: item.description,
-            createdAt: new Date().toISOString(),
-          },
-          ...prev,
-        ]);
-      }
-      setAddedToBucketList((prev) => new Set(prev).add(id));
-    } catch (err) {
-      console.error('버킷리스트 추가 실패:', err);
-      alert('버킷리스트에 추가하는데 실패했습니다.');
+    // ScenarioCard에서 API 호출 및 토스트 처리
+    // 여기서는 로컬 상태만 업데이트
+    if (item && !bucketListItems.find((bucketItem) => bucketItem.id === id)) {
+      setBucketListItems((prev) => [
+        {
+          id: item.id,
+          emoji: item.emoji,
+          title: item.title,
+          description: item.description,
+          createdAt: new Date().toISOString(),
+        },
+        ...prev,
+      ]);
     }
+    setAddedToBucketList((prev) => new Set(prev).add(id));
+  };
+
+  const handleRemoveFromBucketList = (item: { id: string; emoji: string; title: string; description: string }) => {
+    // 상태 업데이트로 ScenarioRecommendCard에 전달
+    setRemovedItem(item);
+    // 즉시 초기화하여 다음 삭제에도 작동하도록
+    setTimeout(() => setRemovedItem(null), 100);
   };
 
   const handleDelete = async (id: string) => {
@@ -89,8 +92,14 @@ export default function BucketListPage() {
       // 삭제 중 상태 추가 (애니메이션 트리거)
       setDeletingItems((prev) => new Set(prev).add(id));
       
+      // 삭제할 항목 정보 저장
+      const deletedItem = bucketListItems.find((item) => item.id === id);
+      
       // API 호출: bucket 값을 토글 (true -> false)
       await toggleBucketList(id);
+      
+      // 성공 토스트 표시
+      setToast({ message: '버킷리스트에서 삭제되었습니다', type: 'success' });
       
       // 애니메이션 시간만큼 대기 (0.5초)
       setTimeout(() => {
@@ -106,6 +115,16 @@ export default function BucketListPage() {
           newSet.delete(id);
           return newSet;
         });
+        
+        // 추천 활동에 다시 추가
+        if (deletedItem && handleRemoveFromBucketList) {
+          handleRemoveFromBucketList({
+            id: deletedItem.id,
+            emoji: deletedItem.emoji,
+            title: deletedItem.title,
+            description: deletedItem.description,
+          });
+        }
       }, 500);
     } catch (err) {
       console.error('버킷리스트 삭제 실패:', err);
@@ -115,13 +134,23 @@ export default function BucketListPage() {
         newSet.delete(id);
         return newSet;
       });
-      alert('버킷리스트에서 삭제하는데 실패했습니다.');
+      setToast({ message: '버킷리스트 삭제에 실패했습니다', type: 'error' });
     }
   };
 
 
   return (
     <div className="min-h-screen bg-white max-w-[1200px] mx-auto py-10 md:py-16 lg:py-[80px] px-4 md:px-6 lg:px-5">
+      {/* Toast 알림 */}
+      {toast && (
+        <Toast
+          message={toast.message}
+          type={toast.type}
+          isVisible={!!toast}
+          onClose={() => setToast(null)}
+        />
+      )}
+      
       <div className="fixed inset-0 z-0">
         <ParticleBackground />
         <GradientBackground />
@@ -153,6 +182,7 @@ export default function BucketListPage() {
             onAddToBucketList={handleAddToBucketList}
             addedToBucketList={addedToBucketList}
             variant="bucketlist"
+            removedFromBucketList={removedItem}
           />
         </motion.div>
 

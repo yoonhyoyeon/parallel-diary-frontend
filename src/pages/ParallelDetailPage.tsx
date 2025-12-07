@@ -5,7 +5,7 @@ import Button from '@/components/Button';
 import ConversionIcon from '@/assets/icons/conversion.svg?react';
 import ArrowLeftIcon from '@/assets/icons/arrow_left.svg?react';
 import ScenarioCard from '@/components/ScenarioCard';
-import { getParallelDiary, toggleBucketList, type ParallelDiaryDetail } from '@/services/diaryService';
+import { getParallelDiary, type ParallelDiaryDetail } from '@/services/diaryService';
 
 export default function ParallelDetailPage() {
   const { id } = useParams({ from: '/protected/diaries/$id/parallel' });
@@ -26,6 +26,12 @@ export default function ParallelDetailPage() {
         setError(null);
         const data = await getParallelDiary(id);
         setParallelDiary(data);
+        
+        // 이미 버킷리스트에 추가된 항목 초기화
+        const bucketItems = data.recommendedActivities
+          .filter(activity => activity.bucket)
+          .map(activity => activity.id);
+        setAddedToBucketList(new Set(bucketItems));
       } catch (err) {
         console.error('평행일기 조회 실패:', err);
         setError('평행일기를 불러오는데 실패했습니다.');
@@ -54,19 +60,10 @@ export default function ParallelDetailPage() {
     hour12: true
   }) : '';
 
-  const handleAddToBucketList = async (activityId: string) => {
-    try {
-      // API 호출: bucket 값을 토글 (false -> true)
-      await toggleBucketList(activityId);
-      
-      // 로컬 상태 업데이트 (UI에 "추가됨" 표시)
-      setAddedToBucketList((prev) => new Set(prev).add(activityId));
-      
-      // 참고: 이 페이지에서는 목록에서 제거하지 않음 (평행일기 상세 페이지)
-    } catch (err) {
-      console.error('버킷리스트 추가 실패:', err);
-      alert('버킷리스트에 추가하는데 실패했습니다.');
-    }
+  const handleAddToBucketList = (activityId: string) => {
+    // ScenarioCard에서 API 호출 및 토스트 처리
+    // 여기서는 로컬 상태만 업데이트
+    setAddedToBucketList((prev) => new Set(prev).add(activityId));
   };
 
   return (

@@ -6,12 +6,13 @@ import type { ActivityDetailData, PlaceSearchKeyword } from '@/services/openaiSe
 import type { NaverPlace } from '@/services/naverLocalService';
 import ParticleBackground from '@/components/ParticleBackground';
 import GradientBackground from '@/components/GradientBackground';
+import Toast from '@/components/Toast';
 import ArrowLeftIcon from '@/assets/icons/arrow_left.svg?react';
 import Button from '@/components/Button';
 import { getActivityDetailById, hasActivityDetail, saveActivityDetailById } from '@/services/activityDetailStorage';
 import { generateActivityDetail } from '@/services/openaiService';
 import { searchMultipleKeywords } from '@/services/naverLocalService';
-import { getRecommendedActivities } from '@/services/diaryService';
+import { getRecommendedActivities, toggleBucketList } from '@/services/diaryService';
 
 export default function ActivityDetailPage() {
   const params = useParams({ strict: false });
@@ -22,6 +23,8 @@ export default function ActivityDetailPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
+  const [isAddedToBucketList, setIsAddedToBucketList] = useState(false);
+  const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
 
   useEffect(() => {
     if (!id) {
@@ -30,7 +33,42 @@ export default function ActivityDetailPage() {
       return;
     }
     loadActivityDetail();
+    checkIfInBucketList();
   }, [id]);
+
+  const checkIfInBucketList = async () => {
+    try {
+      const activities = await getRecommendedActivities();
+      const activity = activities.find((a) => a.id === id);
+      if (activity && activity.bucket) {
+        setIsAddedToBucketList(true);
+      }
+    } catch (err) {
+      console.error('버킷리스트 상태 확인 실패:', err);
+    }
+  };
+
+  const handleAddToBucketList = async () => {
+    try {
+      await toggleBucketList(id);
+      setIsAddedToBucketList(true);
+      setToast({ message: '버킷리스트에 추가했어요!', type: 'success' });
+    } catch (err) {
+      console.error('버킷리스트 추가 실패:', err);
+      setToast({ message: '버킷리스트 추가에 실패했습니다', type: 'error' });
+    }
+  };
+
+  const handleRemoveFromBucketList = async () => {
+    try {
+      await toggleBucketList(id);
+      setIsAddedToBucketList(false);
+      setToast({ message: '버킷리스트에서 삭제했어요', type: 'success' });
+    } catch (err) {
+      console.error('버킷리스트 삭제 실패:', err);
+      setToast({ message: '버킷리스트 삭제에 실패했습니다', type: 'error' });
+    }
+  };
 
   const loadActivityDetail = async () => {
     try {
@@ -207,7 +245,7 @@ export default function ActivityDetailPage() {
             className="flex items-center gap-3 md:gap-4 mb-6"
           >
             <button
-              onClick={() => navigate({ to: '/bucketlist' })}
+              onClick={() => window.history.back()}
               className="flex items-center justify-center hover:opacity-70 transition-opacity"
             >
               <ArrowLeftIcon width={20} height={20} className="text-soft-black md:w-6 md:h-6" />
@@ -221,10 +259,10 @@ export default function ActivityDetailPage() {
           >
             <p className="text-red-500 mb-4">{error || '활동을 찾을 수 없습니다.'}</p>
             <button
-              onClick={() => navigate({ to: '/bucketlist' })}
+              onClick={() => window.history.back()}
               className="px-6 py-3 bg-[#745ede] text-white rounded-lg hover:bg-[#5d4bc4] transition-colors"
             >
-              버킷리스트로 돌아가기
+              뒤로 가기
             </button>
           </motion.div>
         </div>
@@ -234,6 +272,19 @@ export default function ActivityDetailPage() {
 
   return (
     <div className="min-h-screen bg-white max-w-[1200px] mx-auto py-10 md:py-16 lg:py-[80px] px-4 md:px-6 lg:px-5">
+      {/* Toast 알림 */}
+      {toast && (
+        <Toast
+          message={toast.message}
+          type={toast.type}
+          isVisible={!!toast}
+          onClose={() => setToast(null)}
+          actionText={toast.type === 'success' ? '확인하기' : undefined}
+          onActionClick={toast.type === 'success' ? () => navigate({ to: '/bucketlist' }) : undefined}
+          duration={toast.type === 'success' ? undefined : 3000}
+        />
+      )}
+      
       <div className="fixed inset-0 z-0">
         <ParticleBackground />
         <GradientBackground />
@@ -247,7 +298,7 @@ export default function ActivityDetailPage() {
           className="flex items-center gap-3 md:gap-4 mb-6 md:mb-8"
         >
           <button
-            onClick={() => navigate({ to: '/bucketlist' })}
+            onClick={() => window.history.back()}
             className="flex items-center justify-center hover:opacity-70 transition-opacity"
           >
             <ArrowLeftIcon width={20} height={20} className="text-soft-black md:w-6 md:h-6" />
@@ -443,22 +494,39 @@ export default function ActivityDetailPage() {
             </div>
           </motion.div>
 
-          {/* 버킷리스트 추가 버튼 */}
+          {/* 버킷리스트 추가 버튼 또는 추가됨 표시 */}
           <motion.div
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.7 }}
-            className="flex justify-center"
+            className="flex flex-col items-center gap-4"
           >
-            <Button
-              variant="primary"
-              onClick={() => {
-                alert('버킷리스트에 추가되었습니다!');
-              }}
-              className="w-full sm:w-auto"
-            >
-              버킷리스트에 추가
-            </Button>
+            {isAddedToBucketList ? (
+              <>
+                <div className="flex items-center gap-2 px-6 py-3 bg-[#f3f0ff] rounded-2xl">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="text-[#745ede]">
+                    <path d="M5 13l4 4L19 7" />
+                  </svg>
+                  <span className="text-sm md:text-base font-medium text-[#745ede]">
+                    버킷리스트에 추가된 활동이에요.
+                  </span>
+                </div>
+                <button
+                  onClick={handleRemoveFromBucketList}
+                  className="text-sm text-[#9ca3af] hover:text-red-500 transition-colors underline"
+                >
+                  버킷리스트에서 삭제
+                </button>
+              </>
+            ) : (
+              <Button
+                variant="primary"
+                onClick={handleAddToBucketList}
+                className="w-full sm:w-auto"
+              >
+                버킷리스트에 추가
+              </Button>
+            )}
           </motion.div>
         </motion.div>
       </div>

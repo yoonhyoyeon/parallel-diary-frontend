@@ -1,6 +1,7 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { useNavigate } from '@tanstack/react-router';
+import { getDiaries } from '@/services/diaryService';
 import MonotonyScoreCard from './analysis/MonotonyScoreCard';
 import MonotonyTrendCard from './analysis/MonotonyTrendCard';
 import KeywordsCard from './analysis/KeywordsCard';
@@ -14,6 +15,24 @@ import ArrowLeftIcon from '@/assets/icons/arrow_left.svg?react';
 export default function AnalysisPage() {
   const navigate = useNavigate();
   const [addedToBucketList, setAddedToBucketList] = useState<Set<string>>(new Set());
+  const [diaryCount, setDiaryCount] = useState<number>(0);
+  const [isLoadingDiaries, setIsLoadingDiaries] = useState(true);
+
+  useEffect(() => {
+    const fetchDiaries = async () => {
+      try {
+        setIsLoadingDiaries(true);
+        const diaries = await getDiaries();
+        setDiaryCount(diaries.length);
+      } catch (err) {
+        console.error('일기 조회 실패:', err);
+      } finally {
+        setIsLoadingDiaries(false);
+      }
+    };
+
+    fetchDiaries();
+  }, []);
 
   const handleAddToBucketList = (id: string) => {
     setAddedToBucketList((prev) => new Set(prev).add(id));
@@ -47,15 +66,15 @@ export default function AnalysisPage() {
         <div className="w-full grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_minmax(0,2fr)] gap-6">
           {/* 왼쪽 컬럼 */}
           <div className="flex flex-col gap-6 min-w-0">
-            <MonotonyScoreCard />
-            <DailyTypeCard />
+            <MonotonyScoreCard diaryCount={diaryCount} isLoadingDiaries={isLoadingDiaries} />
+            <DailyTypeCard diaryCount={diaryCount} isLoadingDiaries={isLoadingDiaries} />
             <KeywordsCard />
           </div>
 
           {/* 오른쪽 컬럼 */}
           <div className="flex flex-col gap-6 min-w-0">
             <DiaryStatusCard />
-            <MonotonyTrendCard />
+            <MonotonyTrendCard diaryCount={diaryCount} isLoadingDiaries={isLoadingDiaries} />
             <ScenarioRecommendCard
               onAddToBucketList={handleAddToBucketList}
               addedToBucketList={addedToBucketList}

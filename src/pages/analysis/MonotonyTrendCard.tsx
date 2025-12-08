@@ -1,11 +1,16 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from '@tanstack/react-router';
-import { Area, AreaChart, CartesianGrid, ResponsiveContainer, XAxis, YAxis } from 'recharts';
+import { Area, AreaChart, CartesianGrid, ResponsiveContainer, XAxis, YAxis, Tooltip } from 'recharts';
 import { getMonotonyIndices } from '@/services/diaryService';
 import Button from '@/components/Button';
 import SkeletonCard from '@/components/SkeletonCard';
 
-export default function MonotonyTrendCard() {
+interface MonotonyTrendCardProps {
+  diaryCount: number;
+  isLoadingDiaries: boolean;
+}
+
+export default function MonotonyTrendCard({ diaryCount, isLoadingDiaries }: MonotonyTrendCardProps) {
   const navigate = useNavigate();
   const [chartData, setChartData] = useState<Array<{ date: string; value: number }>>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -13,30 +18,42 @@ export default function MonotonyTrendCard() {
 
   useEffect(() => {
     const fetchMonotonyData = async () => {
+      // 일기 개수 로딩 중이면 대기
+      if (isLoadingDiaries) return;
+      
       try {
         setIsLoading(true);
         setError(null);
         
+        // 일기가 3개 미만이면 데이터 없음 처리
+        if (diaryCount < 3) {
+          setIsLoading(false);
+          return;
+        }
+        
+        // 일기가 3개 이상이면 지수 데이터 가져오기
         const data = await getMonotonyIndices();
         
-        // 날짜 기준으로 오름차순 정렬
-        const sortedData = [...data].sort((a, b) => {
-          return new Date(a.date).getTime() - new Date(b.date).getTime();
-        });
-        
-        // 날짜 포맷 변환 및 다채로움 지수 계산
-        const formattedData = sortedData.map(item => {
-          const date = new Date(item.date);
-          const month = date.getMonth() + 1;
-          const day = date.getDate();
+        if (data.length > 0) {
+          // 날짜 기준으로 오름차순 정렬
+          const sortedData = [...data].sort((a, b) => {
+            return new Date(a.date).getTime() - new Date(b.date).getTime();
+          });
           
-          return {
-            date: `${month}.${day}`,
-            value: 100 - item.index // 다채로움 = 100 - 단조로움
-          };
-        });
-        
-        setChartData(formattedData);
+          // 날짜 포맷 변환 및 다채로움 지수 계산
+          const formattedData = sortedData.map(item => {
+            const date = new Date(item.date);
+            const month = date.getMonth() + 1;
+            const day = date.getDate();
+            
+            return {
+              date: `${month}.${day}`,
+              value: 100 - item.index // 다채로움 = 100 - 단조로움
+            };
+          });
+          
+          setChartData(formattedData);
+        }
       } catch (err) {
         console.error('다채로움 지수 변화 조회 실패:', err);
         setError('데이터를 불러오는데 실패했습니다.');
@@ -46,7 +63,7 @@ export default function MonotonyTrendCard() {
     };
     
     fetchMonotonyData();
-  }, []);
+  }, [diaryCount, isLoadingDiaries]);
 
   if (isLoading) {
     return <SkeletonCard variant="chart" />;
@@ -68,10 +85,10 @@ export default function MonotonyTrendCard() {
         <div className="flex flex-col items-center justify-center text-center gap-4 pt-10">
           <div>
             <h3 className="text-base lg:text-[18px] font-bold text-[#2b2b2b] mb-2">
-              일기를 작성해주세요
+              데이터가 충분하지 않아요!
             </h3>
             <p className="text-sm text-[#6b6b6b]">
-              일기를 작성하면 그래프가 표시돼요
+              일기를 더 작성하면 분석이 가능해요!
             </p>
           </div>
           <Button 
@@ -110,6 +127,28 @@ export default function MonotonyTrendCard() {
                 tickLine={false}
                 tick={{ fill: '#404040', fontSize: 12 }}
                 width={30}
+              />
+              <Tooltip
+                contentStyle={{
+                  backgroundColor: '#ffffff',
+                  border: '1px solid #e5e7eb',
+                  borderRadius: '8px',
+                  padding: '8px 12px',
+                  boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
+                }}
+                labelStyle={{
+                  color: '#6b7280',
+                  fontSize: '12px',
+                  fontWeight: '500',
+                  marginBottom: '4px',
+                }}
+                itemStyle={{
+                  color: '#745EDE',
+                  fontSize: '14px',
+                  fontWeight: '600',
+                }}
+                formatter={(value: number) => [`${value}`, '다채로움 지수']}
+                labelFormatter={(label: string) => `${label}`}
               />
               <Area
                 type="monotone"

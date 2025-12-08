@@ -504,7 +504,7 @@ export default function ChatStep({ onComplete }: ChatStepProps) {
         {/* 채팅 인터페이스 - 스크롤 가능한 영역 */}
         <div className="flex-1 flex flex-col gap-4 md:gap-6 pt-28 md:pt-32 lg:pt-37 pb-48 md:pb-52 lg:pb-55">
           <GuidanceMessage className="mb-3 md:mb-5">
-            오늘 하루는 어땟나요? 편하게 이야기해주세요.
+            오늘 하루는 어땠나요? 편하게 이야기해주세요.
           </GuidanceMessage>
           {messages.map((message) => (
             <ChatMessage 

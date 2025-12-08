@@ -19,7 +19,12 @@ const mapApiTypeToFrontType = (apiType: string): DailyTypeValue | null => {
   }
 };
 
-export default function DailyTypeCard() {
+interface DailyTypeCardProps {
+  diaryCount: number;
+  isLoadingDiaries: boolean;
+}
+
+export default function DailyTypeCard({ diaryCount, isLoadingDiaries }: DailyTypeCardProps) {
   const [dailyType, setDailyType] = useState<DailyTypeValue | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -27,18 +32,22 @@ export default function DailyTypeCard() {
   // API로부터 일상 타입 가져오기
   useEffect(() => {
     const fetchDailyType = async () => {
+      // 일기 개수 로딩 중이면 대기
+      if (isLoadingDiaries) return;
+      
       try {
         setIsLoading(true);
         setError(null);
         
-        // 1. 최근 일기들 가져오기
-        const diaries = await getDiaries();
-        
-        if (diaries.length === 0) {
-          setError('일기가 없습니다. 일기를 작성해주세요.');
+        // 일기가 3개 미만일 때 에러 표시
+        if (diaryCount < 3) {
+          setError(diaryCount === 0 ? 'no-diaries' : 'insufficient-data');
           setIsLoading(false);
           return;
         }
+        
+        // 1. 최근 일기들 가져오기
+        const diaries = await getDiaries();
         
         // 2. 일기 내용들을 문장으로 변환
         const sentences = diaries.map(diary => diary.content);
@@ -64,7 +73,7 @@ export default function DailyTypeCard() {
     };
     
     fetchDailyType();
-  }, []);
+  }, [diaryCount, isLoadingDiaries]);
 
   if (isLoading) {
     return <SkeletonCard variant="type" />;
@@ -72,7 +81,7 @@ export default function DailyTypeCard() {
 
   return (
     <div>
-      <h2 className="text-lg lg:text-[20px] font-bold text-[#2b2b2b] mb-4 lg:mb-6">
+      <h2 className="text-lg lg:text-[20px] font-bold text-soft-black mb-4 lg:mb-6">
         나의 일상 타입
       </h2>
       
@@ -86,8 +95,8 @@ export default function DailyTypeCard() {
             {/* 아이콘 */}
             <div className="flex items-center justify-center w-[100px] h-[100px] lg:w-[120px] lg:h-[120px]">
               <span className="text-6xl lg:text-7xl">
-                {error === '일기가 없습니다. 일기를 작성해주세요.'
-                  ? '✍️'
+                {error === 'no-diaries' || error === 'insufficient-data'
+                  ? '🤔'
                   : error === 'classification-failed'
                   ? '🤔'
                   : '⚠️'}
@@ -97,16 +106,16 @@ export default function DailyTypeCard() {
             {/* 메시지 */}
             <div>
               <h3 className="text-lg lg:text-[20px] font-bold text-[#ffffff] mb-2 leading-tight">
-                {error === '일기가 없습니다. 일기를 작성해주세요.'
-                  ? '일기를 작성해주세요'
-                  : '아직 일상 타입을 분석할 수 없어요'}
+                {error === 'no-diaries' || error === 'insufficient-data'
+                  ? '데이터가 충분하지 않아요!'
+                  : '아직 일상 타입을 분석할 수 없어요!'}
               </h3>
               <p className="text-sm lg:text-[14px] text-[#ffffff] opacity-90 leading-relaxed max-w-[280px] break-keep">
-                {error === '일기가 없습니다. 일기를 작성해주세요.'
-                  ? '일기를 작성하고 나의 일상 패턴을 확인해보세요!'
+                {error === 'no-diaries' || error === 'insufficient-data'
+                  ? '일기를 더 작성하면 분석이 가능해요!'
                   : error === 'classification-failed'
                   ? '일기를 더 작성하면 정확한 분석이 가능해요!'
-                  : '잠시 후 다시 시도해주세요.'}
+                  : '잠시 후 다시 시도해주세요!'}
               </p>
             </div>
           </div>

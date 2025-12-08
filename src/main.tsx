@@ -3,6 +3,7 @@ import ReactDOM from 'react-dom/client';
 import { RouterProvider } from '@tanstack/react-router';
 import { router } from './router';
 import { AuthProvider } from './contexts/AuthContext';
+import { ActivityDetailProvider } from './contexts/ActivityDetailContext';
 
 import './styles.css';
 
@@ -14,7 +15,9 @@ if (rootElement && !rootElement.innerHTML) {
   root.render(
     <StrictMode>
       <AuthProvider>
-      <RouterProvider router={router} />
+        <ActivityDetailProvider>
+          <RouterProvider router={router} />
+        </ActivityDetailProvider>
       </AuthProvider>
     </StrictMode>,
   );

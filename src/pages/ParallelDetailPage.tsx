@@ -6,12 +6,15 @@ import ConversionIcon from '@/assets/icons/conversion.svg?react';
 import ArrowLeftIcon from '@/assets/icons/arrow_left.svg?react';
 import ScenarioCard from '@/components/ScenarioCard';
 import { getParallelDiary, type ParallelDiaryDetail } from '@/services/diaryService';
+import { generateActivityDetail } from '@/services/openaiService';
+import { useActivityDetail } from '@/contexts/ActivityDetailContext';
 
 export default function ParallelDetailPage() {
   const { id } = useParams({ from: '/protected/diaries/$id/parallel' });
   const navigate = useNavigate();
   const search = useSearch({ strict: false });
   const fromCreate = search.fromCreate === 1;
+  const activityDetail = useActivityDetail();
 
   const [parallelDiary, setParallelDiary] = useState<ParallelDiaryDetail | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -42,6 +45,73 @@ export default function ParallelDetailPage() {
     
     fetchParallelDiary();
   }, [id]);
+
+  // 백그라운드에서 추천 활동 상세 정보 미리 생성 (병렬 프리페칭)
+  useEffect(() => {
+    if (!parallelDiary?.recommendedActivities) return;
+
+    const prefetchActivityDetails = async () => {
+      // 전역 상태로 중복 확인
+      const activitiesToGenerate = parallelDiary.recommendedActivities.filter(
+        (activity) => {
+          if (activityDetail.hasData(activity.id)) {
+            console.log(`✅ 이미 완료: ${activity.title}`);
+            return false;
+          }
+          if (activityDetail.isLoading(activity.id)) {
+            console.log(`⏳ 이미 생성 중: ${activity.title}`);
+            return false;
+          }
+          return true;
+        }
+      );
+
+      if (activitiesToGenerate.length === 0) {
+        console.log('✅ 모든 활동이 이미 준비되어 있습니다');
+        return;
+      }
+
+      console.log(`🔄 ${activitiesToGenerate.length}개 활동 병렬 생성 시작`);
+
+      // Promise.allSettled로 병렬 처리 (일부 실패해도 다른 활동 계속 처리)
+      const results = await Promise.allSettled(
+        activitiesToGenerate.map(async (activity) => {
+          try {
+            // 1. 로딩 상태로 변경 (중복 방지)
+            activityDetail.setLoading(activity.id);
+            console.log(`🔄 생성 시작: ${activity.title}`);
+            
+            // 2. GPT API 호출
+            const detail = await generateActivityDetail({
+              id: activity.id,
+              emoji: activity.emoji,
+              title: activity.title,
+              description: activity.content,
+            });
+
+            // 3. 완료 상태로 변경 (메모리 + localStorage에 저장)
+            activityDetail.setComplete(activity.id, detail);
+            
+            console.log(`✅ 생성 완료: ${activity.title}`);
+            return { success: true, title: activity.title };
+          } catch (error) {
+            // 4. 에러 상태로 변경
+            activityDetail.setError(activity.id, error instanceof Error ? error.message : String(error));
+            console.error(`❌ 생성 실패: ${activity.title}`, error);
+            return { success: false, title: activity.title, error };
+          }
+        })
+      );
+
+      // 결과 요약
+      const succeeded = results.filter((r) => r.status === 'fulfilled' && r.value.success).length;
+      const failed = results.length - succeeded;
+      console.log(`✅ 병렬 생성 완료: 성공 ${succeeded}개, 실패 ${failed}개`);
+    };
+
+    // 백그라운드에서 비동기 실행 (사용자 경험에 영향 없음)
+    prefetchActivityDetails();
+  }, [parallelDiary, activityDetail]);
   
   if (!parallelDiary && !isLoading && !error) {
     return null;
@@ -173,11 +243,11 @@ export default function ParallelDetailPage() {
             /* 실제 내용 */
             <div className="p-5 md:p-6 lg:p-7 flex flex-col gap-4 md:gap-5 flex-1 min-h-0">
               {/* 주요 순간들 */}
-              {parallelDiary.diary.keywords && parallelDiary.diary.keywords.length > 0 && (
+              {parallelDiary.keywords && parallelDiary.keywords.length > 0 && (
                 <div className="flex flex-col gap-3 md:gap-4 lg:gap-5 shrink-0">
                   <p className="text-base md:text-[17px] lg:text-[18px] font-semibold text-white">주요 순간들</p>
                   <div className="flex gap-2 md:gap-3 flex-wrap">
-                    {parallelDiary.diary.keywords.map((keyword, index) => (
+                    {parallelDiary.keywords.map((keyword, index) => (
                       <div
                         key={index}
                         className="bg-[#eae8ff] flex items-center justify-center px-4 md:px-5 py-2 md:py-3 rounded-lg"

@@ -9,7 +9,7 @@ import GradientBackground from '@/components/GradientBackground';
 import Toast from '@/components/Toast';
 import ArrowLeftIcon from '@/assets/icons/arrow_left.svg?react';
 import Button from '@/components/Button';
-import { getActivityDetailById, hasActivityDetail, saveActivityDetailById } from '@/services/activityDetailStorage';
+import { useActivityDetail, useActivityStatus } from '@/contexts/ActivityDetailContext';
 import { generateActivityDetail } from '@/services/openaiService';
 import { searchMultipleKeywords } from '@/services/naverLocalService';
 import { getRecommendedActivities, toggleBucketList } from '@/services/diaryService';
@@ -18,6 +18,8 @@ export default function ActivityDetailPage() {
   const params = useParams({ strict: false });
   const id = params.id as string;
   const navigate = useNavigate();
+  const activityDetailContext = useActivityDetail();
+  const currentStatus = useActivityStatus(id); // 상태 자동 구독
   const [activityDetail, setActivityDetail] = useState<ActivityDetailData | null>(null);
   const [recommendedPlaces, setRecommendedPlaces] = useState<Array<NaverPlace & { reason?: string }>>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -71,54 +73,71 @@ export default function ActivityDetailPage() {
   };
 
   const loadActivityDetail = async () => {
+    let shouldResetLoading = true;
+    
     try {
       setIsLoading(true);
       setError(null);
 
-      // 1. localStorage에서 확인
-      if (hasActivityDetail(id)) {
-        const cachedDetail = getActivityDetailById(id);
-        if (cachedDetail) {
-          setActivityDetail(cachedDetail);
-          
-          // 캐시된 장소 정보가 있으면 바로 사용
-          if (cachedDetail.recommendedPlaces && cachedDetail.recommendedPlaces.length > 0) {
-            setRecommendedPlaces(cachedDetail.recommendedPlaces);
-            setIsLoading(false);
-            return;
-          }
-          
-          // 캐시된 장소가 없으면 키워드로 검색
-          if (cachedDetail.placeSearchKeywords?.length) {
-            const keywords = cachedDetail.placeSearchKeywords.map((kw: string | PlaceSearchKeyword) => 
-              typeof kw === 'string' ? kw : kw.keyword
-            );
-            const places = await searchMultipleKeywords(keywords);
-            
-            // 추천 이유 매핑
-            const placesWithReason = places.map((place, index) => {
-              const keywordObj = cachedDetail.placeSearchKeywords![index];
-              return {
-                ...place,
-                reason: typeof keywordObj === 'object' ? keywordObj.reason : undefined
-              };
-            });
-            
-            setRecommendedPlaces(placesWithReason);
-            
-            // 검색 결과를 localStorage에 업데이트
-            const updatedDetail = { ...cachedDetail, recommendedPlaces: places };
-            saveActivityDetailById(id, updatedDetail);
-            setActivityDetail(updatedDetail);
-          }
-          
+      // 1. 전역 상태에서 확인
+      if (currentStatus.type === 'complete') {
+        // 완료된 데이터 즉시 표시
+        const cachedDetail = currentStatus.data;
+        setActivityDetail(cachedDetail);
+        
+        // 캐시된 장소 정보가 있으면 바로 사용
+        if (cachedDetail.recommendedPlaces && cachedDetail.recommendedPlaces.length > 0) {
+          setRecommendedPlaces(cachedDetail.recommendedPlaces);
           setIsLoading(false);
           return;
         }
+        
+        // 캐시된 장소가 없으면 키워드로 검색
+        if (cachedDetail.placeSearchKeywords?.length) {
+          const keywords = cachedDetail.placeSearchKeywords.map((kw: string | PlaceSearchKeyword) => 
+            typeof kw === 'string' ? kw : kw.keyword
+          );
+          const places = await searchMultipleKeywords(keywords);
+          
+          // 추천 이유 매핑
+          const placesWithReason = places.map((place, index) => {
+            const keywordObj = cachedDetail.placeSearchKeywords![index];
+            return {
+              ...place,
+              reason: typeof keywordObj === 'object' ? keywordObj.reason : undefined
+            };
+          });
+          
+          setRecommendedPlaces(placesWithReason);
+          
+          // 검색 결과를 전역 상태에 업데이트
+          const updatedDetail = { ...cachedDetail, recommendedPlaces: places };
+          activityDetailContext.setComplete(id, updatedDetail);
+          setActivityDetail(updatedDetail);
+        }
+        
+        setIsLoading(false);
+        return;
       }
 
-      // 2. localStorage에 없으면 API로 활동 기본 정보 가져오기
+      if (currentStatus.type === 'loading') {
+        // 다른 곳에서 이미 생성 중 → 대기
+        console.log('⏳ 다른 곳에서 생성 중... 대기합니다');
+        setIsGenerating(true);
+        setIsLoading(true);
+        shouldResetLoading = false; // Context 업데이트 시 자동 처리
+        return;
+      }
+
+      if (currentStatus.type === 'error') {
+        // 이전에 실패한 경우 → 재시도
+        console.log('⚠️ 이전 요청이 실패했습니다. 재시도합니다.');
+      }
+
+      // 2. 데이터 없음 → 새로 생성
       setIsGenerating(true);
+      activityDetailContext.setLoading(id);
+      
       const activities = await getRecommendedActivities();
       const activity = activities.find((a) => a.id === id);
 
@@ -126,7 +145,7 @@ export default function ActivityDetailPage() {
         throw new Error('활동을 찾을 수 없습니다.');
       }
 
-      // 3. GPT API로 상세 정보 생성 (검색 키워드 포함)
+      // 3. GPT API로 상세 정보 생성
       const generatedDetail = await generateActivityDetail({
         id: activity.id,
         emoji: activity.emoji,
@@ -154,18 +173,50 @@ export default function ActivityDetailPage() {
         setRecommendedPlaces(placesWithReason);
       }
 
-      // 5. 장소 정보 포함하여 localStorage에 저장
+      // 5. 전역 상태에 저장
       const detailWithPlaces = { ...generatedDetail, recommendedPlaces: placesWithReason };
-      saveActivityDetailById(id, detailWithPlaces);
+      activityDetailContext.setComplete(id, detailWithPlaces);
       setActivityDetail(detailWithPlaces);
     } catch (err) {
       console.error('활동 상세 정보 로드 실패:', err);
+      activityDetailContext.setError(id, err instanceof Error ? err.message : String(err));
       setError(err instanceof Error ? err.message : '활동 상세 정보를 불러오는데 실패했습니다.');
     } finally {
-      setIsLoading(false);
-      setIsGenerating(false);
+      if (shouldResetLoading) {
+        setIsLoading(false);
+        setIsGenerating(false);
+      }
     }
   };
+
+  // Context 상태 변화 자동 감지 (useActivityStatus 덕분에 자동 리렌더링)
+  useEffect(() => {
+    if (!id) return;
+    
+    if (currentStatus.type === 'complete') {
+      // 완료됨 → 데이터 표시
+      const detail = currentStatus.data;
+      if (!activityDetail || activityDetail.id !== detail.id) {
+        setActivityDetail(detail);
+        
+        if (detail.recommendedPlaces && detail.recommendedPlaces.length > 0) {
+          setRecommendedPlaces(detail.recommendedPlaces);
+        }
+        
+        setIsGenerating(false);
+        setIsLoading(false);
+      }
+    } else if (currentStatus.type === 'error') {
+      // 에러 발생
+      setError(currentStatus.error);
+      setIsGenerating(false);
+      setIsLoading(false);
+    } else if (currentStatus.type === 'loading') {
+      // 로딩 중 상태 유지
+      setIsGenerating(true);
+      setIsLoading(true);
+    }
+  }, [currentStatus, id, activityDetail]);
 
   const getDifficultyColor = (difficulty: string) => {
     switch (difficulty) {

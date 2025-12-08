@@ -31,6 +31,7 @@ export interface ParallelDiary {
   createdAt: string;
   updatedAt: string;
   recommendedActivities: RecommendedActivity[];
+  keywords: string[];
 }
 
 export interface ParallelDiaryDetail extends ParallelDiary {

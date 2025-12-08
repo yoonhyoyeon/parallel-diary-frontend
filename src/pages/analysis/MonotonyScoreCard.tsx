@@ -4,18 +4,33 @@ import { getMonotonyIndices } from '@/services/diaryService';
 import Button from '@/components/Button';
 import SkeletonCard from '@/components/SkeletonCard';
 
-export default function MonotonyScoreCard() {
+interface MonotonyScoreCardProps {
+  diaryCount: number;
+  isLoadingDiaries: boolean;
+}
+
+export default function MonotonyScoreCard({ diaryCount, isLoadingDiaries }: MonotonyScoreCardProps) {
   const navigate = useNavigate();
   const [monotonyScore, setMonotonyScore] = useState<number | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     const fetchScore = async () => {
+      // 일기 개수 로딩 중이면 대기
+      if (isLoadingDiaries) return;
+      
       try {
         setIsLoading(true);
+        
+        // 일기가 3개 미만이면 데이터 없음 처리
+        if (diaryCount < 3) {
+          setIsLoading(false);
+          return;
+        }
+        
+        // 일기가 3개 이상이면 지수 데이터 가져오기
         const data = await getMonotonyIndices();
         
-        // 가장 최근 지수 가져오기
         if (data.length > 0) {
           const sortedData = [...data].sort((a, b) => 
             new Date(b.date).getTime() - new Date(a.date).getTime()
@@ -30,7 +45,7 @@ export default function MonotonyScoreCard() {
     };
     
     fetchScore();
-  }, []);
+  }, [diaryCount, isLoadingDiaries]);
 
   const score = monotonyScore !== null ? 100 - monotonyScore : 0;
   
@@ -94,10 +109,10 @@ export default function MonotonyScoreCard() {
           <div className="flex-1 flex flex-col items-center justify-center text-center gap-4 pb-6 pt-10 lg:pt-5">
             <div>
               <h4 className="text-base lg:text-[18px] font-bold text-white mb-2">
-                일기를 작성해주세요
+                데이터가 충분하지 않아요!
               </h4>
               <p className="text-sm lg:text-[14px] text-[#9ca3af]">
-                일기를 작성하면 다채로움 지수가 표시돼요
+                일기를 더 작성하면 분석이 가능해요!
               </p>
             </div>
             <Button 
